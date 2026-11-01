@@ -1,0 +1,14 @@
+# Local uploads and user-generated files
+/uploads/*
+!/uploads/.gitkeep
+
+# Local analysis output and source snapshots
+/.agents/
+/.backup-student-html/
+/graphify-out/
+/project-dump.txt
+/assets/css/student.css
+
+# Legacy utilities that are not part of the application
+/reset.php
+/setup-student.sh

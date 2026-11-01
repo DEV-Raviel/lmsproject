@@ -1,0 +1,177 @@
+e-GURO LEARNING MANAGEMENT SYSTEM
+================================
+
+OVERVIEW
+--------
+e-GURO LMS is a PHP and MySQL/MariaDB web application for managing classes,
+learning materials, assignments, quizzes, and student submissions. It provides
+role-specific dashboards for administrators, teachers, and students, using a
+shared navigation style with role-specific tools.
+
+REQUIREMENTS
+------------
+- Apache with PHP 8.1 or later (developed and checked with PHP 8.2)
+- MySQL 5.7+ or MariaDB 10.3+
+- PHP PDO and the PDO MySQL driver (pdo_mysql)
+- PHP Fileinfo extension for validating uploaded files
+- A modern web browser
+
+No Composer or npm packages are required to run the application.
+
+LOCAL INSTALLATION (XAMPP)
+--------------------------
+1. Copy the LMS folder into the web server document root, for example:
+       /opt/lampp/htdocs/LMS
+2. Start Apache and MySQL from the XAMPP control panel.
+3. Create/import the database:
+   - Open phpMyAdmin, select the Import tab, and import database/schema.sql.
+   - The schema creates and selects the lms_db database.
+4. Check the database settings in config/db.php. The default local settings are:
+       Host: localhost
+       Database: lms_db
+       User: root
+       Password: (blank)
+   Change these settings if your local MySQL installation uses different
+   credentials.
+5. Open the application:
+       http://localhost/LMS/
+6. Sign in with a seeded account listed under DEMO ACCOUNTS below.
+
+If the database already contains LMS data, back it up before importing or
+changing its schema. Importing the seed schema is intended for initial setup;
+it is not a substitute for a production backup or migration plan.
+
+DEMO ACCOUNTS
+-------------
+The seeded demo accounts use the password:
+       password123
+
+Role                 User ID
+-------------------  --------
+Administrator        ADMIN-01
+Dean                 DEAN-01
+Teacher               TECH-01
+Teacher               TECH-02
+Student               2026-001
+Student               2026-002
+
+These are demo credentials only. Change or remove them before making the
+application available outside a trusted local development environment.
+
+USER ROLES AND COMMON WORKFLOWS
+-------------------------------
+Administrator / Dean
+  - Sign in to open the administration dashboard.
+  - Manage user accounts and classes.
+  - Enroll students into classes.
+
+Teacher
+  - Open the dashboard to review assigned classes and activity.
+  - Use Students to view students enrolled in assigned classes.
+  - Use Assignments to create class work with instructions, deadlines, and an
+    optional attachment.
+  - Use Learning Materials to upload and share class resources.
+  - Use Quiz Builder to create a quiz with multiple-choice and short-answer
+    questions, answer keys, points, a deadline, and an optional time limit.
+  - Use Calendar, Profile, and Settings for the other teacher pages.
+
+Student
+  - Open My Classes to view enrolled classes and class details.
+  - Open Lessons to download materials shared by a teacher.
+  - Use To Do, Tasks, and Quizzes to review upcoming or due work.
+  - Submit assignment files before the deadline.
+  - Open an available quiz, complete it, and submit it. Multiple-choice and
+    short-answer questions are graded automatically against the teacher's
+    answer key.
+
+Teacher and student pages share the same overall visual style, but the
+available data, actions, and dashboard labels depend on the signed-in role.
+Unauthenticated users must sign in; access to pages for a different role is
+denied.
+
+DATABASE AND MIGRATIONS
+-----------------------
+For a new installation, use database/schema.sql. It contains the complete
+current schema, including quiz tables and demo seed data.
+
+The files in database/migrations are for upgrading an existing database:
+  1. database/migrations/2026_11_create_quizzes.sql
+  2. database/migrations/2026_11_quiz_attempt_timing.sql
+
+Apply the quiz table migration first, then the timing migration. The second
+migration alters quiz_attempts and is not intended to be run repeatedly. Back
+up the database before applying migrations, and verify that the target database
+has not already received the changes.
+
+FILE UPLOADS
+------------
+Teacher assignment attachments and learning materials, and student assignment
+submissions, are saved under uploads/. The application limits uploads to 10 MB
+and checks the file extension and detected MIME type. Supported formats include
+PDF, Office documents, images (PNG/JPG), and ZIP files.
+
+The Apache/PHP process must be able to create and write files in the relevant
+uploads subdirectories. Grant write access to the web-server account for only
+the required upload folders; do not make the entire project world-writable.
+Ensure the PHP upload_max_filesize and post_max_size settings are compatible
+with the application's 10 MB limit. Restart Apache after changing php.ini.
+
+IMPORTANT SECURITY AND DEPLOYMENT NOTES
+---------------------------------------
+- The included database settings and seeded accounts are for local development.
+  Use a dedicated database account with a strong password in a deployed system.
+- Change or remove all demo accounts and passwords before deployment.
+- Serve the application over HTTPS and configure secure PHP session cookies.
+- Restrict database and filesystem permissions to the minimum required.
+- Back up the database and uploaded files regularly.
+- Review PHP/Apache upload limits and error logging for the deployment.
+- Do not expose development tools, database administration pages, or detailed
+  error output to the public internet.
+
+PROJECT GUIDE
+-------------
+index.php                         Sign-in page
+admin/dashboard.php               Administration pages
+teacher/                          Teacher dashboards and tools
+student/                          Student dashboards and learning pages
+actions/                          Login, administration, and submission handlers
+includes/                         Authentication, navigation, and shared helpers
+assets/css/                       Application styles
+assets/js/                        Dashboard, quiz, and upload interactions
+config/db.php                     Database connection settings
+database/schema.sql               Complete schema for a new installation
+database/migrations/              Ordered database upgrade scripts
+uploads/                          Uploaded course and submission files
+
+TROUBLESHOOTING
+---------------
+Database connection failed
+  - Confirm MySQL is running and the database exists.
+  - Check host, database name, username, and password in config/db.php.
+  - Confirm PHP has pdo_mysql enabled.
+
+Login does not work
+  - Confirm the account exists and the user ID/email is entered correctly.
+  - For a fresh demo installation, use the seeded password shown above.
+  - Confirm the account's role is correct in the users table.
+
+Upload fails
+  - Confirm the upload folder exists and is writable by Apache/PHP.
+  - Use a supported file type and a file no larger than 10 MB.
+  - Check upload_max_filesize, post_max_size, and the PHP/Apache error logs.
+
+Quiz tables are missing
+  - For a new database, import database/schema.sql.
+  - For an existing database without quiz tables, back it up and apply the two
+    migration scripts in the order listed in DATABASE AND MIGRATIONS.
+
+Teacher has no classes or a student sees no class work
+  - Confirm the teacher is assigned to the class in the classes table.
+  - Confirm the student is enrolled in that class in class_enrollments.
+  - Confirm the assignment or quiz belongs to that class and is not past due.
+
+SUPPORT AND MAINTENANCE
+-----------------------
+Before changing the application or its database, make a backup of the source,
+database, and uploads folder. Test schema changes and role-specific workflows
+in a non-production environment before deploying them.
