@@ -191,47 +191,6 @@ function get_oer_resources(): array
     ];
 }
 
-function get_student_profile(): array
-{
-    return [
-        'Full Name'      => '[ Student Name ]',
-        'Student ID'     => '[ Student ID ]',
-        'Date of Birth'  => '[ Month / Day / Year ]',
-        'Gender'         => '[ Gender ]',
-        'Address'        => '[ Complete Address ]',
-        'Contact Number' => '[ Contact Number ]',
-        'Email Address'  => '[ Email Address ]',
-    ];
-}
-
-function get_academic_info(): array
-{
-    return [
-        'Course'         => 'Bachelor of Science in Computer Science',
-        'Year Level'     => '[ Year Level ]',
-        'Section'        => '[ Section ]',
-        'Academic Year'  => '2026-2027',
-        'Semester'       => '[ Semester ]',
-        'Student Status' => 'Enrolled',
-    ];
-}
-
-function get_enrolled_subjects(): array
-{
-    return [
-        ['CS201', 'Object-Oriented Programming',        '[ Instructor Name ]', 3, '[ Day and Time ]'],
-        ['CS202', 'Web Development',                    '[ Instructor Name ]', 3, '[ Day and Time ]'],
-        ['CS203', 'Data Structures and Algorithms',     '[ Instructor Name ]', 3, '[ Day and Time ]'],
-        ['CS204', 'Database Management Systems',        '[ Instructor Name ]', 3, '[ Day and Time ]'],
-        ['GE201', 'General Education',                  '[ Instructor Name ]', 3, '[ Day and Time ]'],
-    ];
-}
-
-function get_guardian(): array
-{
-    return ["Guardian's Name" => '[ Guardian Name ]', "Guardian's Contact Number" => '[ Guardian Contact Number ]'];
-}
-
 /* ─── Class-detail sub-pages ─────────────────────────────────────────── */
 
 function get_class_colleagues(int $classId): array

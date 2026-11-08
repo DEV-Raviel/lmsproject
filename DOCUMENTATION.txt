@@ -98,6 +98,9 @@ Teacher
 
 Student
   - Open My Classes to view enrolled classes and class details.
+  - Open Student Profile to view enrollment information submitted through the
+    school's enrollment form. Only the signed-in student and Administrators
+    can view this profile; students cannot edit it.
   - Use Calendar to review class assignment and quiz deadlines, student-only
     events, and read-only school-wide events.
   - Add private study or reminder tasks from the calendar and track them by
@@ -137,7 +140,26 @@ Apply it once after the calendar events migration. Back up the database before
 applying migrations, and verify that the target database has not already
 received each change.
 Apply the personal calendar tasks migration once after the Dean/recovery
-migration to enable private role-calendar task lists.
+migration to enable private role-calendar task lists. Apply
+database/migrations/2026_11_student_profiles.sql once to enable enrollment
+profile imports and manual editing.
+
+STUDENT ENROLLMENT PROFILES
+---------------------------
+Administrators can open Student Profiles from the Admin navigation to edit a
+student's enrollment information or import a Google Forms response CSV. To
+export a CSV, open the form's Responses spreadsheet in Google Sheets and use
+File > Download > Comma-separated values (.csv).
+
+The CSV must include a Student ID, Student Email, or CCC Email column that
+matches an existing student account. Recognized enrollment question headers
+are mapped to the profile fields. Rows with missing or conflicting account
+identifiers, duplicate students, invalid dates, invalid GWA values, or other
+invalid answers are reported; the import is all-or-nothing. Blank imported
+answers clear that field, while columns not included in the CSV leave existing
+profile data unchanged. The importer accepts files up to 5 MB and 5,000 rows.
+Student ID and account email are used only for matching and are not changed by
+the import.
 
 ACCESSIBILITY AND NOTIFICATIONS
 -------------------------------
@@ -178,6 +200,7 @@ admin/dashboard.php               Administrator user and class management
 admin/manage_announcements.php    Dean announcement management
 admin/calendar.php                Dean school events calendar
 admin/recover_accounts.php        Administrator account recovery
+admin/student_profiles.php        Administrator enrollment profile management
 reset-password.php                One-time password reset form
 teacher/                          Teacher dashboards and tools
 student/                          Student dashboards and learning pages
@@ -226,6 +249,13 @@ Personal calendar tasks are unavailable
   - For an existing database, back it up and apply
     database/migrations/2026_11_personal_calendar_tasks.sql after the Dean and
     account recovery migration.
+
+Student profile is empty or unavailable
+  - For a new database, import database/schema.sql.
+  - For an existing database, back it up and apply
+    database/migrations/2026_11_student_profiles.sql once.
+  - Confirm the account has the student role and match the CSV using the
+    student's existing user code or account email.
 
 Teacher has no classes or a student sees no class work
   - Confirm the teacher is assigned to the class in the classes table.

@@ -14,6 +14,7 @@ $menus = [
         'Account Administration' => [
             'accounts' => ['User Management', $basePath . 'admin/dashboard.php'],
             'recovery' => ['Account Recovery', $basePath . 'admin/recover_accounts.php'],
+            'student-profiles' => ['Student Profiles', $basePath . 'admin/student_profiles.php'],
         ]
     ],
     'dean' => [

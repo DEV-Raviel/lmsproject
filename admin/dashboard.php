@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config/db.php';
 
 $user = require_role('admin');
 $basePath = '../';
-$pageTitle = 'Administrator Console';
+$pageTitle = 'User Management';
 $activePage = 'accounts';
 $pdo = Database::connect();
 $flash = $_SESSION['admin_flash'] ?? null;
@@ -48,17 +48,17 @@ include __DIR__ . '/../includes/sidebar.php';
 ?>
 <main class="main-content">
     <div class="page-header">
-        <h2>System Overview</h2>
-        <p>Manage institutional accounts and class assignments.</p>
+        <h2>User Management</h2>
+        <p>Manage accounts and classes.</p>
     </div>
 
     <?php if ($flash): ?>
         <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status" data-toast><?= e($flash['message']) ?></p>
     <?php endif; ?>
 
-    <section class="progress-grid" aria-label="System totals">
+    <section class="progress-grid admin-metrics" aria-label="School totals">
         <?php foreach ([
-            'Total Accounts' => (int) $metrics['accounts'],
+            'Accounts' => (int) $metrics['accounts'],
             'Teachers' => (int) $metrics['teachers'],
             'Students' => (int) $metrics['students'],
             'Classes' => (int) $metrics['classes'],
@@ -71,42 +71,47 @@ include __DIR__ . '/../includes/sidebar.php';
     </section>
 
     <section id="accounts">
-        <div class="page-header">
-            <h2>User Accounts</h2>
-            <p>Create, review, and remove institutional accounts.</p>
+        <div class="admin-section-heading">
+            <h3>Accounts</h3>
+            <span><?= count($users) ?> total</span>
         </div>
-        <form class="card form" method="post" action="../actions/admin_actions.php">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="create_user">
-            <div class="field">
-                <label for="user-code">User code</label>
-                <input id="user-code" name="user_code" required maxlength="50">
-            </div>
-            <div class="field">
-                <label for="full-name">Full name</label>
-                <input id="full-name" name="full_name" required maxlength="150">
-            </div>
-            <div class="field">
-                <label for="email">Institutional email</label>
-                <input id="email" name="email" type="email" required maxlength="150">
-            </div>
-            <div class="field">
-                <label for="role">Role</label>
-                <select id="role" name="role" required>
-                    <option value="teacher">Teacher</option>
-                    <option value="student">Student</option>
-                    <option value="dean">Dean</option>
-                    <option value="admin">Administrator</option>
-                </select>
-            </div>
-            <div class="field">
-                <label for="password">Temporary password</label>
-                <input id="password" name="password" type="password" required minlength="8">
-            </div>
-            <button class="btn" type="submit">Create Account</button>
-        </form>
+        <details class="admin-disclosure">
+            <summary>Create account <span class="disclosure-indicator" aria-hidden="true"></span></summary>
+            <form class="card form" method="post" action="../actions/admin_actions.php">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="create_user">
+                <div class="field">
+                    <label for="user-code">User code</label>
+                    <input id="user-code" name="user_code" required maxlength="50">
+                </div>
+                <div class="field">
+                    <label for="full-name">Full name</label>
+                    <input id="full-name" name="full_name" required maxlength="150">
+                </div>
+                <div class="field">
+                    <label for="email">Institutional email</label>
+                    <input id="email" name="email" type="email" required maxlength="150">
+                </div>
+                <div class="field">
+                    <label for="role">Role</label>
+                    <select id="role" name="role" required>
+                        <option value="teacher">Teacher</option>
+                        <option value="student">Student</option>
+                        <option value="dean">Dean</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="password">Temporary password</label>
+                    <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password">
+                </div>
+                <button class="btn" type="submit">Create account</button>
+            </form>
+        </details>
 
-        <div class="table-responsive">
+        <details class="admin-list-disclosure">
+            <summary>View accounts <span class="disclosure-indicator" aria-hidden="true"></span></summary>
+            <div class="table-responsive">
             <table class="data-table">
                 <thead><tr><th>User code</th><th>Name</th><th>Email</th><th>Role</th><th>Created</th><th>Action</th></tr></thead>
                 <tbody>
@@ -119,7 +124,7 @@ include __DIR__ . '/../includes/sidebar.php';
                         <td><?= e($account['created_at'] ?? '') ?></td>
                         <td>
                             <?php if ($account['role'] !== 'admin' && (int) $account['id'] !== (int) $user['id']): ?>
-                                <form method="post" action="../actions/admin_actions.php">
+                                <form method="post" action="../actions/admin_actions.php" onsubmit="return confirm('Delete this account and its records? This cannot be undone.');">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="action" value="delete_user">
                                     <input type="hidden" name="id" value="<?= (int) $account['id'] ?>">
@@ -132,46 +137,52 @@ include __DIR__ . '/../includes/sidebar.php';
                 <?php if (!$users): ?><tr><td colspan="6">No accounts found.</td></tr><?php endif; ?>
                 </tbody>
             </table>
-        </div>
+            </div>
+        </details>
     </section>
 
     <section id="classes">
-        <div class="page-header">
-            <h2>Class Management</h2>
-            <p>Create classes and assign them to teachers.</p>
+        <div class="admin-section-heading">
+            <h3>Classes</h3>
+            <span><?= count($classes) ?> total</span>
         </div>
-        <form class="card form" method="post" action="../actions/admin_actions.php">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="create_class">
-            <div class="field">
-                <label for="class-code">Class code / section</label>
-                <input id="class-code" name="code" required maxlength="50">
-            </div>
-            <div class="field">
-                <label for="class-name">Subject title</label>
-                <input id="class-name" name="name" required maxlength="150">
-            </div>
-            <div class="field">
-                <label for="teacher-id">Assigned teacher</label>
-                <select id="teacher-id" name="teacher_id" required>
-                    <?php foreach ($teachers as $teacher): ?>
-                        <option value="<?= (int) $teacher['id'] ?>"><?= e($teacher['full_name'] . ' (' . $teacher['user_code'] . ')') ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="field">
-                <label for="semester">Semester</label>
-                <input id="semester" name="semester" required value="1st Semester" maxlength="50">
-            </div>
-            <div class="field">
-                <label for="fiscal-year">Academic year</label>
-                <input id="fiscal-year" name="fiscal_year" required value="2026-2027" maxlength="50">
-            </div>
-            <button class="btn" type="submit" <?= !$teachers ? 'disabled' : '' ?>>Create &amp; Assign Class</button>
-            <?php if (!$teachers): ?><p>Add a teacher account before creating a class.</p><?php endif; ?>
-        </form>
+        <details class="admin-disclosure">
+            <summary>Create class <span class="disclosure-indicator" aria-hidden="true"></span></summary>
+            <form class="card form" method="post" action="../actions/admin_actions.php">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="create_class">
+                <div class="field">
+                    <label for="class-code">Class code / section</label>
+                    <input id="class-code" name="code" required maxlength="50">
+                </div>
+                <div class="field">
+                    <label for="class-name">Subject title</label>
+                    <input id="class-name" name="name" required maxlength="150">
+                </div>
+                <div class="field">
+                    <label for="teacher-id">Assigned teacher</label>
+                    <select id="teacher-id" name="teacher_id" required>
+                        <?php foreach ($teachers as $teacher): ?>
+                            <option value="<?= (int) $teacher['id'] ?>"><?= e($teacher['full_name'] . ' (' . $teacher['user_code'] . ')') ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="semester">Semester</label>
+                    <input id="semester" name="semester" required value="1st Semester" maxlength="50">
+                </div>
+                <div class="field">
+                    <label for="fiscal-year">Academic year</label>
+                    <input id="fiscal-year" name="fiscal_year" required value="2026-2027" maxlength="50">
+                </div>
+                <button class="btn" type="submit" <?= !$teachers ? 'disabled' : '' ?>>Create class</button>
+                <?php if (!$teachers): ?><p>Add a teacher account before creating a class.</p><?php endif; ?>
+            </form>
+        </details>
 
-        <div class="table-responsive">
+        <details class="admin-list-disclosure">
+            <summary>View classes <span class="disclosure-indicator" aria-hidden="true"></span></summary>
+            <div class="table-responsive">
             <table class="data-table">
                 <thead><tr><th>Code</th><th>Subject</th><th>Teacher</th><th>Term / Year</th><th>Students</th><th>Action</th></tr></thead>
                 <tbody>
@@ -184,46 +195,53 @@ include __DIR__ . '/../includes/sidebar.php';
                         <td><?= (int) $class['students_count'] ?></td>
                         <td>
                             <?php if ($students): ?>
-                                <form class="enrollment-form" method="post" action="../actions/admin_actions.php">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="action" value="enroll_student">
-                                    <input type="hidden" name="class_id" value="<?= (int) $class['id'] ?>">
-                                    <select name="student_id" aria-label="Select student for <?= e($class['code']) ?>" required>
-                                        <option value="">Enroll a student</option>
-                                        <?php foreach ($students as $student): ?>
-                                            <option value="<?= (int) $student['id'] ?>"><?= e($student['full_name'] . ' (' . $student['user_code'] . ')') ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <button class="btn btn-sm" type="submit">Enroll</button>
-                                </form>
-                                <details class="batch-enrollment">
-                                    <summary>Enroll multiple students</summary>
-                                    <form method="post" action="../actions/admin_actions.php">
+                                <details class="class-action-disclosure">
+                                    <summary>Enroll students <span class="disclosure-indicator" aria-hidden="true"></span></summary>
+                                    <form class="enrollment-form" method="post" action="../actions/admin_actions.php">
                                         <?= csrf_field() ?>
-                                        <input type="hidden" name="action" value="batch_enroll_students">
+                                        <input type="hidden" name="action" value="enroll_student">
                                         <input type="hidden" name="class_id" value="<?= (int) $class['id'] ?>">
-                                        <label class="field">
-                                            <span>Student user codes or emails</span>
-                                            <textarea name="student_identifiers" rows="3" maxlength="30000" placeholder="One per line, or comma-separated" required></textarea>
-                                        </label>
-                                        <small>Paste up to 200 student identifiers. Existing enrollments are skipped.</small>
-                                        <button class="btn btn-outline btn-sm" type="submit">Enroll students</button>
+                                        <select name="student_id" aria-label="Select student for <?= e($class['code']) ?>" required>
+                                            <option value="">Choose one student</option>
+                                            <?php foreach ($students as $student): ?>
+                                                <option value="<?= (int) $student['id'] ?>"><?= e($student['full_name'] . ' (' . $student['user_code'] . ')') ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <button class="btn btn-sm" type="submit">Enroll student</button>
                                     </form>
+                                    <details class="batch-enrollment">
+                                        <summary>Enroll a group <span class="disclosure-indicator" aria-hidden="true"></span></summary>
+                                        <form method="post" action="../actions/admin_actions.php">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="action" value="batch_enroll_students">
+                                            <input type="hidden" name="class_id" value="<?= (int) $class['id'] ?>">
+                                            <label class="field">
+                                                <span>Student user codes or emails</span>
+                                                <textarea name="student_identifiers" rows="3" maxlength="30000" placeholder="One per line, or comma-separated" required></textarea>
+                                            </label>
+                                            <small>Up to 200 students. Already-enrolled students are skipped.</small>
+                                            <button class="btn btn-outline btn-sm" type="submit">Enroll students</button>
+                                        </form>
+                                    </details>
                                 </details>
                             <?php else: ?><span>Create a student account first.</span><?php endif; ?>
-                            <form method="post" action="../actions/admin_actions.php">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="action" value="delete_class">
-                                <input type="hidden" name="id" value="<?= (int) $class['id'] ?>">
-                                <button class="btn btn-danger btn-sm" type="submit">Remove</button>
-                            </form>
+                            <details class="class-action-disclosure class-remove-disclosure">
+                                <summary>Remove class <span class="disclosure-indicator" aria-hidden="true"></span></summary>
+                                <form method="post" action="../actions/admin_actions.php" onsubmit="return confirm('Remove this class and its enrollments? This cannot be undone.');">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="action" value="delete_class">
+                                    <input type="hidden" name="id" value="<?= (int) $class['id'] ?>">
+                                    <button class="btn btn-danger btn-sm" type="submit">Remove <?= e($class['code']) ?></button>
+                                </form>
+                            </details>
                         </td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if (!$classes): ?><tr><td colspan="6">No classes have been created.</td></tr><?php endif; ?>
                 </tbody>
             </table>
-        </div>
+            </div>
+        </details>
     </section>
 </main>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

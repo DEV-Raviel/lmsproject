@@ -29,7 +29,7 @@ $profileHref = match ($user['role'] ?? '') {
 <a class="skip-link" href="#main-content">Skip to main content</a>
 <header class="topbar">
     <div class="brand-area">
-        <h1>e-GURO</h1>
+        <h1><a class="brand-home" href="<?= e($basePath) ?>index.php">e-GURO</a></h1>
         <span class="brand-badge"><?= e(strtoupper($user['role'] ?? 'LMS')) ?></span>
     </div>
     <div class="header-right">
@@ -44,8 +44,8 @@ $profileHref = match ($user['role'] ?? '') {
                 <?php if (($user['role'] ?? '') === 'student'): ?>
                     <li><a href="<?= e($basePath) ?>student/notifications.php">Notifications</a></li>
                 <?php endif; ?>
-                <li><hr style="border: 0; border-top: 1px solid var(--border); margin: 0.25rem 0;"></li>
-                <li><a href="<?= e($basePath) ?>logout.php" style="color: #ef4444;">Sign Out</a></li>
+                <li><hr class="profile-divider"></li>
+                <li><a class="signout-link" href="<?= e($basePath) ?>logout.php">Sign out</a></li>
             </ul>
         </details>
     </div>

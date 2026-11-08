@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/announcements.php';
 
 $pageTitle = 'Teacher Dashboard';
 $activePage = 'dashboard';
-$schoolAnnouncements = get_school_announcements($pdo, 4);
+$schoolAnnouncements = get_school_announcements($pdo, 2);
 $classIds = array_column($classes, 'id');
 $studentCount = 0;
 $assignmentCount = 0;
@@ -47,26 +47,24 @@ include __DIR__ . '/../includes/sidebar.php';
 <div class="main-content dashboard-grid">
     <main class="dashboard-main-area card dashboard-master-card">
         <div class="page-header">
-            <p class="eyebrow">TEACHING OVERVIEW</p>
             <h2>Welcome back, <?= e($user['name']) ?></h2>
-            <p>Your classes, learners, and teaching tools at a glance.</p>
+            <p>Your classes and upcoming work.</p>
             <div class="dashboard-shortcuts">
                 <a class="btn" href="quizzes.php">+ Create a quiz</a>
                 <a class="btn btn-outline" href="assignments.php">Create assignment</a>
-                <a class="btn btn-outline" href="learning-materials.php">Upload material</a>
             </div>
         </div>
         <?php if ($flash): ?>
             <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status"><?= e($flash['message']) ?></p>
         <?php endif; ?>
-        <div class="section-break-title">Teaching Overview</div>
-        <div class="card-grid">
+        <div class="section-break-title">At a glance</div>
+        <div class="card-grid dashboard-metrics-grid">
             <?php foreach ([
-                ['MY CLASSES', count($classes), 'Assigned sections', 'my-classes.php', 'View Classes'],
-                ['STUDENTS', $studentCount, 'Across your classes', 'students.php', 'View Students'],
-                ['ASSIGNMENTS', $assignmentCount, 'Created activities', 'assignments.php', 'Manage Assignments'],
-                ['QUIZZES', $quizCount, 'Knowledge checks', 'quizzes.php', 'Build a Quiz'],
-                ['MATERIALS', $materialCount, 'Class resources', 'learning-materials.php', 'Manage Materials'],
+                ['My classes', count($classes), 'Assigned sections', 'my-classes.php', 'View classes'],
+                ['Students', $studentCount, 'Across your classes', 'students.php', 'View students'],
+                ['Assignments', $assignmentCount, 'Created activities', 'assignments.php', 'Manage assignments'],
+                ['Quizzes', $quizCount, 'Knowledge checks', 'quizzes.php', 'Build a quiz'],
+                ['Materials', $materialCount, 'Class resources', 'learning-materials.php', 'Manage materials'],
             ] as [$label, $count, $caption, $href, $action]): ?>
                 <a class="card sub-card metric-card status-assigned" href="<?= e($href) ?>">
                     <div class="metric-card-top"><span class="metric-label"><?= e($label) ?></span><span class="metric-caption"><?= e($caption) ?></span></div>
@@ -116,7 +114,7 @@ include __DIR__ . '/../includes/sidebar.php';
         </section>
         <h3>Upcoming Deadlines</h3>
         <?php if ($upcoming): ?>
-            <?php foreach ($upcoming as $item): ?>
+            <?php foreach (array_slice($upcoming, 0, 3) as $item): ?>
                 <article class="announcement-item">
                     <h4><?= e($item['title']) ?></h4>
                     <p class="announcement-meta"><?= e($item['activity_type']) ?> · <?= e($item['code']) ?> · <?= e(date('M j, Y g:i A', strtotime($item['deadline']))) ?></p>

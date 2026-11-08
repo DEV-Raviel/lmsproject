@@ -7,7 +7,7 @@ $pageTitle  = 'Dashboard';
 $activePage = 'dashboard';
 
 $pdo = Database::connect();
-$schoolAnnouncements = get_school_announcements($pdo, 4);
+$schoolAnnouncements = get_school_announcements($pdo, 2);
 $enrolledClasses = get_classes();
 $counts = get_task_counts();
 $availableQuizzes = array_values(array_filter(
@@ -17,10 +17,10 @@ $availableQuizzes = array_values(array_filter(
 $fy     = get_fiscal_year();
 
 $activityCards = [
-    ['DUE TODAY', $counts['due_today'],           'Assignments & quizzes',        'todo.php?filter=due-today',          'View Tasks'],
-    ['ASSIGNED',  $counts['assigned'],            'Upcoming work',                 'todo.php?filter=assigned',           'View Tasks'],
-    ['MISSED',    $counts['missed'],              'Past due work',                 'todo.php?filter=missed',             'Review Work'],
-    ['MATERIALS', $counts['unread_lessons'],      'Class resources',               'my-class.php',                      'View Classes'],
+    ['Due today', $counts['due_today'],           'Assignments and quizzes',       'todo.php?filter=due-today',          'View tasks'],
+    ['Upcoming',  $counts['assigned'],            'Assigned work',                  'todo.php?filter=assigned',           'View tasks'],
+    ['Past due',  $counts['missed'],              'Needs attention',                'todo.php?filter=missed',             'Review work'],
+    ['Materials', $counts['unread_lessons'],      'Class resources',                'my-class.php',                      'View classes'],
 ];
 
 include __DIR__ . '/../includes/header.php';
@@ -31,9 +31,8 @@ include __DIR__ . '/../includes/sidebar.php';
     <!-- Master Card Wrapper for Dashboard Content -->
     <main class="dashboard-main-area card dashboard-master-card">
         <div class="page-header">
-            <p class="eyebrow">YOUR LEARNING SPACE</p>
             <h2>Welcome back, <?= e($user['name']) ?></h2>
-            <p>Here’s what’s happening with your classes and coursework.</p>
+            <p>Your classes and coursework at a glance.</p>
         </div>
         <div class="dashboard-term-bar">
             <span>Academic Year: <?= e($fy['year']) ?></span>
@@ -42,8 +41,8 @@ include __DIR__ . '/../includes/sidebar.php';
         </div>
 
         <!-- Row 1: Activities, Quizzes, and Updates -->
-        <div class="section-break-title">Activities, Quizzes & Updates</div>
-        <div class="card-grid">
+        <div class="section-break-title">Your work</div>
+        <div class="card-grid dashboard-metrics-grid">
             <?php foreach ($activityCards as [$label, $count, $caption, $href, $linkText]): ?>
                 <?php
                     $statusClass = 'status-' . strtolower(str_replace(' ', '-', $label));
@@ -62,11 +61,11 @@ include __DIR__ . '/../includes/sidebar.php';
         </div>
 
         <!-- Row 2: Assessments -->
-        <div class="section-break-title">Your Classes &amp; Quizzes</div>
+        <div class="section-break-title">Classes and quizzes</div>
         <div class="card-grid">
                 <section class="card sub-card metric-card status-my-classes">
                     <div class="metric-card-top">
-                        <span class="metric-label">MY CLASSES</span>
+                        <span class="metric-label">My classes</span>
                         <span class="metric-caption">Enrolled classes</span>
                     </div>
                     <div class="metric-value"><?= count($enrolledClasses) ?></div>
@@ -90,7 +89,7 @@ include __DIR__ . '/../includes/sidebar.php';
 
                 <section class="card sub-card metric-card status-quizzes">
                         <div class="metric-card-top">
-                        <span class="metric-label">QUIZZES</span>
+                        <span class="metric-label">Quizzes</span>
                         <span class="metric-caption">Open quizzes</span>
                     </div>
                     <div class="metric-value"><?= count($availableQuizzes) ?></div>
@@ -131,28 +130,11 @@ include __DIR__ . '/../includes/sidebar.php';
                 <p class="empty">There are no school announcements right now.</p>
             <?php endif; ?>
         </section>
-        <div class="bulletin-toggle-container">
-            <button type="button" class="btn-toggle-bulletin" id="toggleBulletinBtn" onclick="toggleBulletin()">Hide Bulletin</button>
-        </div>
-        <div id="bulletinWrapper" class="bulletin-wrapper">
+        <details class="bulletin-disclosure">
+            <summary>More resources <span class="disclosure-indicator" aria-hidden="true"></span></summary>
             <?php include __DIR__ . '/../includes/widgets/bulletin-widget.php'; ?>
-        </div>
+        </details>
     </div>
 </div>
-
-<script>
-    function toggleBulletin() {
-        const wrapper = document.getElementById('bulletinWrapper');
-        const btn = document.getElementById('toggleBulletinBtn');
-
-        if (wrapper.classList.contains('hidden')) {
-            wrapper.classList.remove('hidden');
-            btn.textContent = 'Hide Bulletin';
-        } else {
-            wrapper.classList.add('hidden');
-            btn.textContent = 'Show Bulletin';
-        }
-    }
-</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

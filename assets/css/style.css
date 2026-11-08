@@ -5,6 +5,17 @@
   --primary-light: #eaf1fa;
   --secondary: #102b53;
   --accent: #315d91;
+  --danger: #b42318;
+  --danger-hover: #912018;
+  --success: #245c39;
+  --focus-ring: #315d91;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --radius-sm: 0.5rem;
   --bg-main: #f3f6fb;
   --bg-surface: #ffffff;
   --border: #dce5f0;
@@ -55,6 +66,14 @@ header.topbar {
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.02em;
+}
+.brand-home {
+  color: inherit;
+  text-decoration: none;
+}
+.brand-home:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 .brand-badge {
   background: var(--accent);
@@ -130,6 +149,14 @@ header.topbar {
   background: var(--bg-main);
   color: var(--accent);
 }
+.profile-divider {
+  margin: var(--space-1) 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+.profile-dropdown li a.signout-link {
+  color: var(--danger);
+}
 
 /* ── Layout Structure ────────────────────────────────────────────── */
 .layout-container {
@@ -170,7 +197,7 @@ nav.sidebar {
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-muted);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.05em;
   margin: 1rem 0 0.5rem;
 }
@@ -964,8 +991,7 @@ button.btn-danger[type="submit"]:hover {
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
   margin: 0.25rem 0;
 }
 
@@ -1061,7 +1087,7 @@ button.btn-danger[type="submit"]:hover {
   color: var(--secondary);
   font-size: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: none;
   padding: 0.75rem 1rem;
   text-align: left;
 }
@@ -1296,6 +1322,150 @@ p.empty {
 @media (max-width: 480px) {
   .class-card-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+.content-card {
+  margin-bottom: 1.25rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.content-card > h3 {
+  margin-bottom: 0.75rem;
+  color: var(--secondary);
+  font-size: 1.05rem;
+}
+
+.content-card > p {
+  margin-bottom: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.profile-import-help {
+  margin: 0.75rem 0 1rem;
+  color: var(--text-main);
+  font-size: 0.86rem;
+}
+
+.profile-import-help summary,
+.profile-section summary {
+  color: var(--secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-import-help p {
+  max-width: 75ch;
+  margin-top: 0.55rem;
+  color: var(--text-muted);
+}
+
+.form-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.profile-section {
+  margin-bottom: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+
+.profile-section[open] {
+  background: #fff;
+}
+
+.profile-field-grid,
+.profile-value-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+  margin-top: 1rem;
+}
+
+.profile-field-grid .field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.profile-field-grid .field > span,
+.profile-value dt {
+  color: var(--secondary);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.profile-field-grid input,
+.profile-field-grid select,
+.profile-field-grid textarea,
+.form-stack input[type="file"] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text-main);
+  font: inherit;
+}
+
+.profile-field-grid textarea {
+  resize: vertical;
+}
+
+.profile-field-grid small,
+.form-stack small {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.profile-value {
+  min-width: 0;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-value dd {
+  margin-top: 0.2rem;
+  overflow-wrap: anywhere;
+  color: var(--text-main);
+  font-size: 0.9rem;
+}
+
+.profile-privacy-note {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--primary);
+  border-radius: 6px;
+  background: var(--primary-light);
+  color: var(--secondary);
+  font-size: 0.84rem;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+@media (max-width: 640px) {
+  .profile-field-grid,
+  .profile-value-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-section {
+    padding: 0.8rem;
   }
 }
 
@@ -1584,6 +1754,197 @@ nav.sidebar a {
   outline-offset: 2px;
 }
 
+.admin-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: var(--space-6) 0 var(--space-2);
+}
+
+.admin-section-heading h3 {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 1.125rem;
+}
+
+.admin-section-heading > span {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.admin-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: var(--space-6);
+}
+
+.admin-metrics .progress-card {
+  padding: var(--space-3) var(--space-4);
+  box-shadow: none;
+}
+
+.admin-metrics .progress-label {
+  margin-bottom: var(--space-1);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.875rem;
+}
+
+.admin-disclosure,
+.admin-list-disclosure,
+.class-action-disclosure {
+  margin-block: var(--space-2);
+}
+
+.admin-disclosure > summary,
+.admin-list-disclosure > summary,
+.class-action-disclosure > summary,
+.bulletin-disclosure > summary {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--primary);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.admin-disclosure > summary {
+  width: fit-content;
+  padding-inline: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+
+.admin-disclosure .form {
+  margin-top: var(--space-2);
+}
+
+.admin-list-disclosure > summary {
+  color: var(--primary);
+  font-weight: 650;
+}
+
+.admin-list-disclosure[open] > summary {
+  margin-bottom: var(--space-2);
+}
+
+.disclosure-indicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-inline-start: auto;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 150ms ease-out;
+}
+
+.admin-disclosure[open] > summary .disclosure-indicator,
+.admin-list-disclosure[open] > summary .disclosure-indicator,
+.class-action-disclosure[open] > summary .disclosure-indicator,
+.bulletin-disclosure[open] > summary .disclosure-indicator {
+  transform: rotate(45deg);
+}
+
+.class-action-disclosure {
+  min-width: 9rem;
+}
+
+.class-action-disclosure[open] {
+  min-width: 15rem;
+}
+
+.class-action-disclosure > form {
+  margin-block: var(--space-2);
+}
+
+.class-action-disclosure .enrollment-form {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.class-remove-disclosure > summary {
+  min-height: 40px;
+  color: var(--danger);
+  font-size: 0.8125rem;
+}
+
+.class-remove-disclosure .btn-danger {
+  white-space: normal;
+}
+
+.dashboard-metrics-grid .metric-card {
+  min-height: 8.5rem;
+}
+
+.dashboard-metrics-grid .metric-label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.dashboard-metrics-grid .metric-value {
+  font-size: 2rem;
+}
+
+.bulletin-disclosure {
+  margin-top: var(--space-4);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.bulletin-disclosure[open] > summary {
+  margin-bottom: var(--space-2);
+}
+
+.topbar :focus-visible {
+  outline-color: #fff;
+}
+
+@media (max-width: 640px) {
+  .admin-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .admin-metrics .progress-card {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .dashboard-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .dashboard-metrics-grid .metric-card {
+    min-height: 7.5rem;
+    padding: var(--space-3);
+  }
+
+  .dashboard-metrics-grid .metric-value {
+    font-size: 1.75rem;
+  }
+
+  .class-action-disclosure[open] {
+    min-width: min(15rem, 70vw);
+  }
+}
+
+@media (forced-colors: active) {
+  .admin-disclosure > summary,
+  .admin-list-disclosure > summary,
+  .class-action-disclosure > summary,
+  .bulletin-disclosure > summary {
+    border: 1px solid ButtonText;
+  }
+
+  .progress-card,
+  .card {
+    border: 1px solid CanvasText;
+  }
+}
+
 @media (max-width: 640px) {
   .personal-task-form {
     grid-template-columns: 1fr;
@@ -1729,7 +2090,11 @@ main.main-content,
   color: var(--accent) !important;
   font-size: 0.7rem !important;
   font-weight: 750;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+.eyebrow::first-letter {
+  text-transform: uppercase;
 }
 
 .card,
@@ -1760,7 +2125,8 @@ main.main-content,
 
 .metric-label {
   font-size: 0.78rem;
-  letter-spacing: 0.045em;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .metric-value {
@@ -1873,13 +2239,14 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 button:focus-visible,
-a:focus-visible {
-  outline: 3px solid #93afd1;
+a:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
 .btn {
-  min-height: 42px;
+  min-height: 44px;
   padding: 0.6rem 1rem;
   border-radius: 8px;
   background: var(--primary);
@@ -1892,18 +2259,18 @@ button[type="submit"]:hover {
 
 .btn-danger,
 button.btn-danger[type="submit"] {
-  background: #36577f;
+  background: var(--danger);
 }
 
 .btn-danger:hover,
 button.btn-danger[type="submit"]:hover {
-  background: #102b53;
+  background: var(--danger-hover);
 }
 
 .notice.error {
-  border-color: #b9c9de;
-  background: #edf3fa;
-  color: var(--secondary);
+  border-color: #d7a4a4;
+  background: #fff5f5;
+  color: #783b3b;
 }
 
 .table-responsive {
@@ -2784,10 +3151,10 @@ button.btn-danger[type="submit"]:hover {
 
   .sidebar ul {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.35rem;
-    overflow-x: auto;
+    overflow: visible;
     padding: 0.15rem 0 0.25rem;
-    scrollbar-width: thin;
   }
 
   .sidebar li {
@@ -2796,7 +3163,7 @@ button.btn-danger[type="submit"]:hover {
   }
 
   .sidebar a {
-    min-height: 40px;
+    min-height: 44px;
     white-space: nowrap;
     font-size: 0.8rem;
   }
