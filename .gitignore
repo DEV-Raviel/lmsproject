@@ -9,6 +9,8 @@
 /graphify-out/
 /project-dump.txt
 /assets/css/student.css
+/.phpunit.result.cache
+/vendor/
 
 # Legacy utilities that are not part of the application
 /setup-student.sh

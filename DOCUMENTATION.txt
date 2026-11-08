@@ -212,6 +212,26 @@ current-page navigation state, and shared accessible toast notifications for
 status and error messages. Notifications remain readable inline if JavaScript
 is unavailable. On narrow screens, class tabs can be scrolled horizontally.
 
+TESTING
+-------
+PHPUnit tests use an isolated MySQL database. Never point them at the live
+application database. Create a test schema from the current database schema
+(replace the schema name with lms_test) using test-only credentials:
+
+       mysql -u root -e "CREATE DATABASE lms_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+       sed 's/`lms_db`/`lms_test`/g' database/schema.sql | mysql -u root
+
+Then run:
+
+       composer install
+       composer test
+
+The test bootstrap rejects database names that do not end in "_test". PHPUnit's
+default connection uses localhost, database lms_test, and user root; configure
+LMS_DB_HOST, LMS_DB_NAME, LMS_DB_USER, and LMS_DB_PASSWORD for a dedicated test
+server as needed. Browser workflows were also checked with Playwright at 375,
+768, 1024, 1280, and 1920 pixel viewport widths.
+
 FILE UPLOADS
 ------------
 Teacher assignment attachments and learning materials, and student assignment
