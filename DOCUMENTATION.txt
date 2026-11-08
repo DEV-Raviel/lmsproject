@@ -144,6 +144,14 @@ Unauthenticated users must sign in. Dean pages require the Dean role and
 Administrator pages require the Administrator role; neither role can open the
 other role's protected tools.
 
+Navigation
+  - On screens 1024 pixels wide or narrower, use Menu to open the role-specific
+    navigation drawer. Close it with the backdrop, Escape, or a navigation link.
+  - On larger screens, the same grouped navigation remains in the left sidebar.
+  - The account menu in the top bar contains the profile link and sign-out.
+  - Data tables can be scrolled horizontally on narrow screens without
+    widening the page.
+
 DATABASE AND MIGRATIONS
 -----------------------
 For a new installation, use database/schema.sql. It contains the complete

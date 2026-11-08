@@ -58,6 +58,7 @@ function render_table(array $headers, array $rows, string $empty = 'Nothing to s
         echo '<p class="empty">' . e($empty) . '</p>';
         return;
     }
+    echo '<div class="table-responsive" role="region" aria-label="Scrollable results" tabindex="0">';
     echo '<table class="data-table"><thead><tr>';
     foreach ($headers as $h) {
         echo '<th>' . e($h) . '</th>';
@@ -74,7 +75,7 @@ function render_table(array $headers, array $rows, string $empty = 'Nothing to s
         }
         echo '</tr>';
     }
-    echo '</tbody></table>';
+    echo '</tbody></table></div>';
 }
 
 /** Print a label/value table: render_details(['Full Name' => 'Ana', ...]) */

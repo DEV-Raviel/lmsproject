@@ -29,15 +29,19 @@ $profileHref = match ($user['role'] ?? '') {
 <a class="skip-link" href="#main-content">Skip to main content</a>
 <header class="topbar">
     <div class="brand-area">
+        <button class="nav-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false">
+            <span class="nav-toggle-icon" aria-hidden="true"><span></span></span>
+            <span class="nav-toggle-text">Menu</span>
+        </button>
         <h1><a class="brand-home" href="<?= e($basePath) ?>index.php">e-GURO</a></h1>
         <span class="brand-badge"><?= e(strtoupper($user['role'] ?? 'LMS')) ?></span>
     </div>
     <div class="header-right">
         <span><?= e(date('D, M j, Y')) ?></span>
         <details class="profile-dropdown">
-            <summary>
+            <summary aria-label="Account menu for <?= e($user['name'] ?? 'User') ?>">
                 <span class="user-avatar" aria-hidden="true"><?= e($avatarInitial) ?></span>
-                <span><?= e($user['name'] ?? 'User') ?></span>
+                <span class="profile-name"><?= e($user['name'] ?? 'User') ?></span>
             </summary>
             <ul>
                 <li><a href="<?= e($profileHref) ?>"><?= e($profileLabel) ?></a></li>
@@ -51,4 +55,5 @@ $profileHref = match ($user['role'] ?? '') {
     </div>
 </header>
 
+<button class="nav-backdrop" type="button" aria-label="Close navigation" hidden></button>
 <div class="layout-container">

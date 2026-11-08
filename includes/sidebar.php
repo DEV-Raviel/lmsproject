@@ -24,15 +24,23 @@ $menus = [
         ]
     ],
     'teacher' => [
-        'Teacher Management' => [
-            'dashboard' => ['Overview',          $basePath . 'teacher/dashboard.php'],
-            'classes'   => ['My Classes',        $basePath . 'teacher/my-classes.php'],
-            'students'  => ['Student List',      $basePath . 'teacher/students.php'],
-            'calendar'  => ['Academic Calendar', $basePath . 'teacher/calendar.php'],
+        'Overview' => [
+            'dashboard' => ['Dashboard', $basePath . 'teacher/dashboard.php'],
+        ],
+        'Classes' => [
+            'classes' => ['My Classes', $basePath . 'teacher/my-classes.php'],
+            'students' => ['Student List', $basePath . 'teacher/students.php'],
+        ],
+        'Teaching' => [
             'assignments' => ['Assignments', $basePath . 'teacher/assignments.php'],
             'gradebook' => ['Gradebook', $basePath . 'teacher/gradebook.php'],
             'quizzes' => ['Quiz Builder', $basePath . 'teacher/quizzes.php'],
             'materials' => ['Learning Materials', $basePath . 'teacher/learning-materials.php'],
+        ],
+        'Planning' => [
+            'calendar'  => ['Academic Calendar', $basePath . 'teacher/calendar.php'],
+        ],
+        'Account' => [
             'profile' => ['My Profile', $basePath . 'teacher/teacher-profile.php'],
             'settings' => ['Settings', $basePath . 'teacher/settings.php'],
         ]
@@ -56,7 +64,7 @@ $menus = [
 
 $currentMenu = $menus[$role] ?? $menus['student'];
 ?>
-<nav class="sidebar" aria-label="<?= e(ucfirst($role)) ?> navigation">
+<nav class="sidebar" id="primary-navigation" aria-label="<?= e(ucfirst($role)) ?> navigation">
     <div class="sidebar-profile">
         <span class="user-avatar user-avatar-large" aria-hidden="true"><?= e($avatarInitial) ?></span>
         <h3><?= e($user['name'] ?? 'User Name') ?></h3>
