@@ -76,9 +76,88 @@ try {
         if (!$id || $id === (int) $user['id']) {
             $fail('That account cannot be deleted.');
         }
+        $pdo->beginTransaction();
+        $accountStmt = $pdo->prepare('SELECT role FROM users WHERE id = ? FOR UPDATE');
+        $accountStmt->execute([$id]);
+        $accountRole = $accountStmt->fetchColumn();
+        if ($accountRole === false || $accountRole === 'admin') {
+            $pdo->rollBack();
+            $fail('The account was not found or is protected.');
+        }
+
+        if ($accountRole === 'student') {
+            $lockSubmissions = $pdo->prepare('SELECT id FROM submissions WHERE student_id = ? FOR UPDATE');
+            $lockSubmissions->execute([$id]);
+            $lockAttempts = $pdo->prepare('SELECT id FROM quiz_attempts WHERE student_id = ? FOR UPDATE');
+            $lockAttempts->execute([$id]);
+            $gradedRecords = $pdo->prepare(
+                'SELECT
+                    EXISTS(SELECT 1 FROM submissions WHERE student_id = ? AND score IS NOT NULL)
+                    OR EXISTS(SELECT 1 FROM quiz_attempts WHERE student_id = ? AND submitted_at IS NOT NULL)'
+            );
+            $gradedRecords->execute([$id, $id]);
+        } elseif ($accountRole === 'teacher') {
+            $lockClasses = $pdo->prepare('SELECT id FROM classes WHERE teacher_id = ? FOR UPDATE');
+            $lockClasses->execute([$id]);
+            $lockAssignments = $pdo->prepare(
+                'SELECT a.id FROM assignments a
+                 JOIN classes c ON c.id = a.class_id
+                 WHERE c.teacher_id = ? OR a.created_by = ?
+                 FOR UPDATE'
+            );
+            $lockAssignments->execute([$id, $id]);
+            $lockQuizzes = $pdo->prepare(
+                'SELECT q.id FROM quizzes q
+                 JOIN classes c ON c.id = q.class_id
+                 WHERE c.teacher_id = ? OR q.created_by = ?
+                 FOR UPDATE'
+            );
+            $lockQuizzes->execute([$id, $id]);
+            $lockSubmissions = $pdo->prepare(
+                'SELECT s.id FROM submissions s
+                 JOIN assignments a ON a.id = s.assignment_id
+                 JOIN classes c ON c.id = a.class_id
+                 WHERE c.teacher_id = ? OR a.created_by = ?
+                 FOR UPDATE'
+            );
+            $lockSubmissions->execute([$id, $id]);
+            $lockAttempts = $pdo->prepare(
+                'SELECT qa.id FROM quiz_attempts qa
+                 JOIN quizzes q ON q.id = qa.quiz_id
+                 JOIN classes c ON c.id = q.class_id
+                 WHERE c.teacher_id = ? OR q.created_by = ?
+                 FOR UPDATE'
+            );
+            $lockAttempts->execute([$id, $id]);
+            $gradedRecords = $pdo->prepare(
+                'SELECT
+                    EXISTS(
+                        SELECT 1 FROM submissions s
+                        JOIN assignments a ON a.id = s.assignment_id
+                        JOIN classes c ON c.id = a.class_id
+                        WHERE (c.teacher_id = ? OR a.created_by = ?) AND s.score IS NOT NULL
+                    )
+                    OR EXISTS(
+                        SELECT 1 FROM quiz_attempts qa
+                        JOIN quizzes q ON q.id = qa.quiz_id
+                        JOIN classes c ON c.id = q.class_id
+                        WHERE (c.teacher_id = ? OR q.created_by = ?) AND qa.submitted_at IS NOT NULL
+                    )'
+            );
+            $gradedRecords->execute([$id, $id, $id, $id]);
+        } else {
+            $gradedRecords = null;
+        }
+        if ($gradedRecords && (bool) $gradedRecords->fetchColumn()) {
+            $pdo->rollBack();
+            $fail('This account has graded work and cannot be deleted without removing academic history.');
+        }
+
         $stmt = $pdo->prepare("DELETE FROM users WHERE id = ? AND role <> 'admin'");
         $stmt->execute([$id]);
-        $succeed($stmt->rowCount() ? 'Account deleted successfully.' : 'The account was not found or is protected.');
+        $deleted = $stmt->rowCount() === 1;
+        $pdo->commit();
+        $succeed($deleted ? 'Account deleted successfully.' : 'The account was not found or is protected.');
     }
 
     if ($action === 'delete_class') {
@@ -86,9 +165,52 @@ try {
         if (!$id) {
             $fail('Select a valid class to remove.');
         }
+        $pdo->beginTransaction();
+        $classStmt = $pdo->prepare('SELECT id FROM classes WHERE id = ? FOR UPDATE');
+        $classStmt->execute([$id]);
+        if (!$classStmt->fetchColumn()) {
+            $pdo->rollBack();
+            $fail('The class was not found.');
+        }
+        $lockAssignments = $pdo->prepare('SELECT id FROM assignments WHERE class_id = ? FOR UPDATE');
+        $lockAssignments->execute([$id]);
+        $lockQuizzes = $pdo->prepare('SELECT id FROM quizzes WHERE class_id = ? FOR UPDATE');
+        $lockQuizzes->execute([$id]);
+        $lockSubmissions = $pdo->prepare(
+            'SELECT s.id FROM submissions s
+             JOIN assignments a ON a.id = s.assignment_id
+             WHERE a.class_id = ? FOR UPDATE'
+        );
+        $lockSubmissions->execute([$id]);
+        $lockAttempts = $pdo->prepare(
+            'SELECT qa.id FROM quiz_attempts qa
+             JOIN quizzes q ON q.id = qa.quiz_id
+             WHERE q.class_id = ? FOR UPDATE'
+        );
+        $lockAttempts->execute([$id]);
+        $gradedRecords = $pdo->prepare(
+            'SELECT
+                EXISTS(
+                    SELECT 1 FROM submissions s
+                    JOIN assignments a ON a.id = s.assignment_id
+                    WHERE a.class_id = ? AND s.score IS NOT NULL
+                )
+                OR EXISTS(
+                    SELECT 1 FROM quiz_attempts qa
+                    JOIN quizzes q ON q.id = qa.quiz_id
+                    WHERE q.class_id = ? AND qa.submitted_at IS NOT NULL
+                )'
+        );
+        $gradedRecords->execute([$id, $id]);
+        if ((bool) $gradedRecords->fetchColumn()) {
+            $pdo->rollBack();
+            $fail('This class contains graded work and cannot be deleted without removing academic history.');
+        }
         $stmt = $pdo->prepare('DELETE FROM classes WHERE id = ?');
         $stmt->execute([$id]);
-        $succeed($stmt->rowCount() ? 'Class removed successfully.' : 'The class was not found.');
+        $deleted = $stmt->rowCount() === 1;
+        $pdo->commit();
+        $succeed($deleted ? 'Class removed successfully.' : 'The class was not found.');
     }
     if ($action === 'enroll_student') {
         $classId = filter_var($_POST['class_id'] ?? null, FILTER_VALIDATE_INT);
@@ -191,6 +313,9 @@ try {
 
     $fail('Unknown action.');
 } catch (PDOException $exception) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     error_log('Admin action failed: ' . $exception->getMessage());
     $fail('The requested change could not be saved. Check for duplicate user codes/emails or class codes and try again.');
 }

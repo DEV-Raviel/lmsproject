@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS `assignments` (
     `instructions` TEXT NULL,
     `file_path` VARCHAR(255) NULL,
     `deadline` DATETIME NOT NULL,
+    `points_possible` INT UNSIGNED NOT NULL DEFAULT 100,
     `created_by` INT NOT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`class_id`) REFERENCES `classes`(`id`) ON DELETE CASCADE,

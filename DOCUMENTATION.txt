@@ -104,7 +104,9 @@ Teacher
     dates appear alongside class deadlines and can be edited or completed.
   - Expand the event count on a busy calendar day to view the remaining events.
   - Use Assignments to create class work with instructions, deadlines, and an
-    optional attachment.
+    point value, and an optional attachment.
+  - Open Gradebook to download student submissions and score each assignment.
+    Scores must be between zero and the assignment's points possible.
   - Use Learning Materials to upload and share class resources.
   - Use Quiz Builder to create a quiz with multiple-choice and short-answer
     questions, answer keys, points, a deadline, and an optional time limit.
@@ -126,6 +128,8 @@ Student
   - Open an available quiz, complete it, and submit it. Multiple-choice and
     short-answer questions are graded automatically against the teacher's
     answer key.
+  - Open Grade Report to view assignment scores, quiz scores, due dates, and
+    submission status for enrolled classes.
 
 Teacher and student pages share the same overall visual style, but the
 available data, actions, and dashboard labels depend on the signed-in role.
@@ -147,6 +151,7 @@ The files in database/migrations are for upgrading an existing database:
   6. database/migrations/2026_11_dean_announcements_and_account_recovery.sql
   7. database/migrations/2026_11_personal_calendar_tasks.sql
   8. database/migrations/2026_11_student_profiles.sql
+  9. database/migrations/2026_11_assignment_grading.sql
 
 Apply the auth-security migration to existing installations before using the
 login throttling feature. Login attempts are limited per normalized account
@@ -163,6 +168,10 @@ creates announcement and one-time reset-token tables). Apply personal calendar
 tasks after the Dean/recovery migration, and student profiles independently.
 Back up the database before applying migrations and verify that each target
 change has not already been applied.
+The assignment-grading migration adds the points-possible field used by the
+teacher Gradebook and must be applied before creating or grading assignments.
+Administrator deletion is blocked when an account or class is linked to graded
+student work; those records cannot be deleted without removing academic history.
 
 STUDENT ENROLLMENT PROFILES
 ---------------------------
@@ -224,6 +233,7 @@ admin/student_profiles.php        Administrator enrollment profile management
 change-password.php               Forced first-login password change
 reset-password.php                Legacy one-time reset-link form
 teacher/                          Teacher dashboards and tools
+teacher/gradebook.php             Teacher grading for assignment submissions
 student/                          Student dashboards and learning pages
 actions/                          Login, role tools, and submission handlers
 includes/                         Authentication, navigation, and shared helpers

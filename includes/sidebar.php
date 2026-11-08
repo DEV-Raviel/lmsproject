@@ -30,6 +30,7 @@ $menus = [
             'students'  => ['Student List',      $basePath . 'teacher/students.php'],
             'calendar'  => ['Academic Calendar', $basePath . 'teacher/calendar.php'],
             'assignments' => ['Assignments', $basePath . 'teacher/assignments.php'],
+            'gradebook' => ['Gradebook', $basePath . 'teacher/gradebook.php'],
             'quizzes' => ['Quiz Builder', $basePath . 'teacher/quizzes.php'],
             'materials' => ['Learning Materials', $basePath . 'teacher/learning-materials.php'],
             'profile' => ['My Profile', $basePath . 'teacher/teacher-profile.php'],

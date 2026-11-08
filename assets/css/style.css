@@ -841,6 +841,26 @@ button.calendar-event:hover {
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.grade-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 13rem;
+}
+.grade-entry input {
+  width: 6rem;
+  min-width: 0;
+  padding: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-main);
+  font: inherit;
+}
 .form .field {
   display: flex;
   flex-direction: column;

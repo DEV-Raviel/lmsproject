@@ -162,10 +162,49 @@ function get_class_by_id(int $id): ?array
 
 function get_grades(): array
 {
-    return [
-        ['[SUBJECT]', '[TEACHER]', '--', '--', '--', 'Pending'],
-        ['[SUBJECT]', '[TEACHER]', '--', '--', '--', 'Pending'],
-    ];
+    $user = current_user();
+    if (!$user) {
+        return [];
+    }
+
+    $stmt = Database::connect()->prepare(
+        "SELECT c.code AS subject, teacher.full_name AS teacher, a.title AS assessment,
+                'Assignment' AS type,
+                CASE WHEN s.score IS NULL THEN '--'
+                     ELSE CONCAT(s.score, '/', a.points_possible) END AS score,
+                CASE WHEN s.id IS NULL THEN 'Not submitted'
+                     WHEN s.score IS NULL THEN 'Awaiting grade'
+                     ELSE 'Graded' END AS status,
+                a.deadline AS due_date
+         FROM class_enrollments ce
+         JOIN classes c ON c.id = ce.class_id
+         LEFT JOIN users teacher ON teacher.id = c.teacher_id
+         JOIN assignments a ON a.class_id = c.id
+         LEFT JOIN submissions s ON s.assignment_id = a.id AND s.student_id = ce.student_id
+         WHERE ce.student_id = ?
+         UNION ALL
+         SELECT c.code AS subject, teacher.full_name AS teacher, q.title AS assessment,
+                'Quiz' AS type,
+                CASE WHEN qa.submitted_at IS NULL THEN '--'
+                     ELSE CONCAT(qa.score, '/', qa.max_score) END AS score,
+                CASE WHEN qa.id IS NULL THEN 'Not started'
+                     WHEN qa.submitted_at IS NULL THEN 'In progress'
+                     ELSE 'Graded' END AS status,
+                q.deadline AS due_date
+         FROM class_enrollments ce
+         JOIN classes c ON c.id = ce.class_id
+         LEFT JOIN users teacher ON teacher.id = c.teacher_id
+         JOIN quizzes q ON q.class_id = c.id
+         LEFT JOIN quiz_attempts qa ON qa.quiz_id = q.id AND qa.student_id = ce.student_id
+         WHERE ce.student_id = ?
+         ORDER BY due_date DESC, assessment"
+    );
+    $stmt->execute([$user['id'], $user['id']]);
+    $grades = $stmt->fetchAll();
+    return array_map(static function (array $grade): array {
+        $grade['due_date'] = date('M j, Y g:i A', strtotime($grade['due_date']));
+        return $grade;
+    }, $grades);
 }
 
 function get_lessons(): array
@@ -253,8 +292,11 @@ function get_class_assessments(int $classId): array
     $pdo = Database::connect();
     $stmt = $pdo->prepare(
         "SELECT a.id, a.title, 'Activity' AS type, a.deadline AS due_date,
-                CASE WHEN s.id IS NULL THEN 'Pending' ELSE 'Submitted' END AS status,
-                COALESCE(CAST(s.score AS CHAR), '--') AS score,
+               CASE WHEN s.id IS NULL THEN 'Pending'
+                    WHEN s.score IS NULL THEN 'Submitted'
+                    ELSE 'Graded' END AS status,
+                CASE WHEN s.score IS NULL THEN '--'
+                     ELSE CONCAT(s.score, '/', a.points_possible) END AS score,
                 'assignment' AS item_type
          FROM assignments a
          LEFT JOIN submissions s ON s.assignment_id = a.id AND s.student_id = ?
