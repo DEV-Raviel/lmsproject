@@ -92,11 +92,15 @@ Dean
     student dashboards, while drafts remain private to the Dean.
   - Use School Events to create global events visible to every role. Teachers
     and students can view these events but cannot edit them.
+  - Use Fiscal Year to select an academic year and review the classes assigned
+    to it across the school.
   - Add private personal tasks to the Dean calendar; due dates appear alongside
     school events, and tasks can be edited, completed, reopened, or deleted.
 
 Teacher
   - Open the dashboard to review assigned classes and activity.
+  - Use Fiscal Year to select an academic year and review only your assigned
+    classes for that year.
   - Open My Classes to see each assigned class and jump to its students,
     assignments, quizzes, or learning materials. Class links keep the selected
     class active in the related teacher tools.
@@ -120,6 +124,8 @@ Teacher
 
 Student
   - Open My Classes to view enrolled classes and class details.
+  - Use Fiscal Year to select an academic year and see only your enrolled
+    classes assigned to that year.
   - Open Student Profile to view enrollment information submitted through the
     school's enrollment form. Only the signed-in student and Administrators
     can view this profile; students cannot edit it.
@@ -144,9 +150,17 @@ available data, actions, and dashboard labels depend on the signed-in role.
 Unauthenticated users must sign in. Dean pages require the Dean role and
 Administrator pages require the Administrator role; neither role can open the
 other role's protected tools.
+  - Fiscal Year is available from the navigation for Administrators, Deans,
+    Teachers, and Students. The year dropdown is based on each role's access:
+    students see enrolled classes, teachers see their assigned classes, and
+    Administrators and Deans see school classes. Choosing a year filters the
+    class, semester, and teacher list to that year. The student dashboard also
+    reflects the academic periods assigned to the student's classes.
   - All roles can update their password from My Account after confirming their
-    current password. Administrators supply each account's institutional email
-    at creation; teachers cannot change that email in their profile.
+    current password. My Account changes, first-login changes, and reset links
+    all require 12 to 200 characters and a matching confirmation.
+    Administrators supply each account's institutional email at creation;
+    teachers cannot change that email in their profile.
   - Teachers must add a valid Facebook profile link in My Profile. Students
     enrolled in a teacher's class can open that instructor's profile to view
     the admin-provided email and Facebook contact link.

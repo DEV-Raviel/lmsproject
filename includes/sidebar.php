@@ -15,12 +15,18 @@ $menus = [
             'accounts' => ['User Management', $basePath . 'admin/dashboard.php'],
             'recovery' => ['Account Recovery', $basePath . 'admin/recover_accounts.php'],
             'student-profiles' => ['Student Profiles', $basePath . 'admin/student_profiles.php'],
+        ],
+        'Academic Information' => [
+            'fiscal-year' => ['Fiscal Year', $basePath . 'admin/fiscal-year.php'],
         ]
     ],
     'dean' => [
         'School Communications' => [
             'announcements' => ['Announcements', $basePath . 'admin/manage_announcements.php'],
             'calendar' => ['School Events', $basePath . 'admin/calendar.php'],
+        ],
+        'Academic Information' => [
+            'fiscal-year' => ['Fiscal Year', $basePath . 'admin/fiscal-year.php'],
         ]
     ],
     'teacher' => [
@@ -39,6 +45,7 @@ $menus = [
         ],
         'Planning' => [
             'calendar'  => ['Academic Calendar', $basePath . 'teacher/calendar.php'],
+            'fiscal-year' => ['Fiscal Year', $basePath . 'teacher/fiscal-year.php'],
         ],
         'Account' => [
             'profile' => ['My Profile', $basePath . 'teacher/teacher-profile.php'],
@@ -55,6 +62,7 @@ $menus = [
         ],
         'Information & Resources' => [
             'student-info' => ['Student Profile', 'student-info.php'],
+            'fiscal-year'  => ['Fiscal Year', 'fiscal-year.php'],
             'calendar'     => ['Calendar',        'calendar.php'],
             'oer'          => ['OER Library',     'oer.php'],
             'privacy'      => ['Privacy Policy',  'privacy.php'],

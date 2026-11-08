@@ -27,10 +27,15 @@ if (!$classmate) {
 
 $pageTitle = 'Classmate Profile';
 $activePage = 'my-class';
+$backUrl = 'class-details.php?' . http_build_query([
+    'id' => (int) $classId,
+    'tab' => 'colleagues',
+]);
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
 ?>
 <main class="main-content">
+    <a class="btn-back profile-back" href="<?= e($backUrl) ?>">← Back to Colleagues</a>
     <div class="page-header">
         <h2>Classmate profile</h2>
         <p>Contact details shared with students in this class.</p>

@@ -7,6 +7,12 @@ function e($value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function is_valid_new_password(string $password): bool
+{
+    $length = mb_strlen($password, 'UTF-8');
+    return $length >= 12 && $length <= 200;
+}
+
 function is_valid_facebook_url(string $url): bool
 {
     $parts = parse_url($url);

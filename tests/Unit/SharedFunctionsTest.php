@@ -14,6 +14,14 @@ final class SharedFunctionsTest extends TestCase
         self::assertSame('&lt;script&gt;&quot;&amp;&#039;', e('<script>"&\''));
     }
 
+    public function testNewPasswordsUseTheSameTwelveToTwoHundredCharacterRule(): void
+    {
+        self::assertFalse(is_valid_new_password(str_repeat('a', 11)));
+        self::assertTrue(is_valid_new_password(str_repeat('a', 12)));
+        self::assertTrue(is_valid_new_password(str_repeat('a', 200)));
+        self::assertFalse(is_valid_new_password(str_repeat('a', 201)));
+    }
+
     public function testFacebookProfileLinksRequireAnHttpsFacebookUrl(): void
     {
         self::assertTrue(is_valid_facebook_url('https://www.facebook.com/example.teacher'));

@@ -64,11 +64,12 @@ unset($_SESSION['account_flash']);
             </div>
             <div class="field">
                 <label for="new-password">New password</label>
-                <input id="new-password" name="new_password" type="password" autocomplete="new-password" minlength="8" required>
+                <input id="new-password" name="new_password" type="password" autocomplete="new-password" minlength="12" maxlength="200" required>
+                <small>Use 12 to 200 characters.</small>
             </div>
             <div class="field">
                 <label for="confirm-password">Confirm new password</label>
-                <input id="confirm-password" name="confirm_password" type="password" autocomplete="new-password" minlength="8" required>
+                <input id="confirm-password" name="confirm_password" type="password" autocomplete="new-password" minlength="12" maxlength="200" required>
             </div>
             <button class="btn" type="submit">Update password</button>
         </form>

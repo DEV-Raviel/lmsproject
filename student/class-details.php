@@ -54,7 +54,7 @@ include __DIR__ . '/../includes/sidebar.php';
             <p class="class-meta">
                 Section: <?= e($class['section']) ?>  |  Instructor:
                 <?php if (!empty($class['teacher_id'])): ?>
-                    <a href="teacher-profile.php?id=<?= (int) $class['teacher_id'] ?>"><?= e($class['teacher']) ?></a>
+                    <a href="teacher-profile.php?id=<?= (int) $class['teacher_id'] ?>&amp;class_id=<?= $classId ?>"><?= e($class['teacher']) ?></a>
                 <?php else: ?>
                     <?= e($class['teacher'] ?? 'Not assigned') ?>
                 <?php endif; ?>
@@ -163,7 +163,7 @@ include __DIR__ . '/../includes/sidebar.php';
             <div class="people-grid">
                 <?php if (!empty($class['teacher_id'])): ?>
                     <?php $teacherPhoto = profile_photo_src($class['teacher_photo'], (int) $class['teacher_id'], '../', $classId); ?>
-                    <a class="person-card person-card-teacher" href="teacher-profile.php?id=<?= (int) $class['teacher_id'] ?>">
+                    <a class="person-card person-card-teacher" href="teacher-profile.php?id=<?= (int) $class['teacher_id'] ?>&amp;class_id=<?= $classId ?>">
                         <?php if ($teacherPhoto): ?>
                             <img class="person-photo" src="<?= e($teacherPhoto) ?>" alt="">
                         <?php else: ?>

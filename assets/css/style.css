@@ -354,6 +354,9 @@ main.main-content,
   background: var(--primary);
   color: #fff;
 }
+.profile-back {
+  margin-bottom: 1rem;
+}
 
 /* ── Tab Navigation ──────────────────────────────────────────────── */
 .tab-nav {

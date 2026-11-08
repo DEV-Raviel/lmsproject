@@ -14,7 +14,15 @@ $availableQuizzes = array_values(array_filter(
     array_merge(get_tasks('due-today'), get_tasks('assigned')),
     static fn(array $item): bool => $item['type'] === 'quiz'
 ));
-$fy     = get_fiscal_year();
+$academicPeriods = [];
+foreach ($enrolledClasses as $class) {
+    $fiscalYear = trim((string) ($class['fiscal_year'] ?? ''));
+    if ($fiscalYear !== '') {
+        $semester = trim((string) ($class['semester'] ?? ''));
+        $academicPeriods[] = $fiscalYear . ($semester !== '' ? ' · ' . $semester : '');
+    }
+}
+$academicPeriods = array_values(array_unique($academicPeriods));
 
 $activityCards = [
     ['Due today', $counts['due_today'],           'Assignments and quizzes',       'todo.php?filter=due-today',          'View tasks'],
@@ -35,9 +43,7 @@ include __DIR__ . '/../includes/sidebar.php';
             <p>Your classes and coursework at a glance.</p>
         </div>
         <div class="dashboard-term-bar">
-            <span>Academic Year: <?= e($fy['year']) ?></span>
-            <span class="term-separator">|</span>
-            <span><?= e($fy['semester']) ?></span>
+            <span>Academic periods: <?= e($academicPeriods ? implode(' | ', $academicPeriods) : 'Not assigned') ?></span>
         </div>
 
         <!-- Row 1: Activities, Quizzes, and Updates -->

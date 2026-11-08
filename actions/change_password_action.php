@@ -20,7 +20,7 @@ if (!csrf_token_is_valid($_POST['csrf'] ?? null)) {
 
 $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
 $confirmation = is_string($_POST['password_confirmation'] ?? null) ? $_POST['password_confirmation'] : '';
-if (strlen($password) < 12 || strlen($password) > 200) {
+if (!is_valid_new_password($password)) {
     $_SESSION['password_change_error'] = 'Choose a password between 12 and 200 characters.';
     header('Location: ../change-password.php');
     exit;

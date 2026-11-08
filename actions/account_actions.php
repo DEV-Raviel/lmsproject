@@ -33,8 +33,8 @@ $currentPassword = is_string($_POST['current_password'] ?? null) ? $_POST['curre
 $newPassword = is_string($_POST['new_password'] ?? null) ? $_POST['new_password'] : '';
 $confirmPassword = is_string($_POST['confirm_password'] ?? null) ? $_POST['confirm_password'] : '';
 
-if ($currentPassword === '' || strlen($newPassword) < 8) {
-    $redirectWithMessage('Enter your current password and a new password of at least 8 characters.', true);
+if ($currentPassword === '' || !is_valid_new_password($newPassword)) {
+    $redirectWithMessage('Enter your current password and choose a new password between 12 and 200 characters.', true);
 }
 if ($newPassword !== $confirmPassword) {
     $redirectWithMessage('The new passwords do not match.', true);

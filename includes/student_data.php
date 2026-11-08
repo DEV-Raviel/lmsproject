@@ -105,14 +105,35 @@ function get_tasks(string $view, string $search = ''): array
     }, $tasks);
 }
 
-function get_fiscal_year(): array
+function get_academic_classes_for_current_user(): array
 {
-    return ['year' => '2026-2027', 'semester' => '1st Semester'];
-}
+    $user = current_user();
+    if (!$user) {
+        return [];
+    }
 
-function get_academic_periods(): array
-{
-    return [['1st Semester', 'Current'], ['2nd Semester', 'Upcoming'], ['Summer', 'Upcoming']];
+    $query = 'SELECT c.id, c.code, c.name, c.fiscal_year, c.semester, teacher.full_name AS teacher
+              FROM classes c
+              LEFT JOIN users teacher ON teacher.id = c.teacher_id';
+    $parameters = [];
+    $conditions = ["c.fiscal_year IS NOT NULL", "TRIM(c.fiscal_year) <> ''"];
+    if ($user['role'] === 'student') {
+        $query .= ' JOIN class_enrollments enrollment ON enrollment.class_id = c.id';
+        $conditions[] = 'enrollment.student_id = ?';
+        $parameters[] = (int) $user['id'];
+    } elseif ($user['role'] === 'teacher') {
+        $conditions[] = 'c.teacher_id = ?';
+        $parameters[] = (int) $user['id'];
+    } elseif (!in_array($user['role'], ['admin', 'dean'], true)) {
+        return [];
+    }
+
+    $query .= ' WHERE ' . implode(' AND ', $conditions);
+    $query .= ' ORDER BY c.fiscal_year DESC, c.semester, c.code';
+
+    $stmt = Database::connect()->prepare($query);
+    $stmt->execute($parameters);
+    return $stmt->fetchAll();
 }
 
 function get_bulletins(?int $limit = null): array
@@ -145,6 +166,7 @@ function get_classes(): array
     $pdo = Database::connect();
     $stmt = $pdo->prepare(
         'SELECT c.id, c.code AS section, c.name AS subject, c.teacher_id,
+                c.fiscal_year, c.semester,
                 u.full_name AS teacher, u.email AS teacher_email,
                 u.facebook_url AS teacher_facebook_url,
                 u.profile_photo_path AS teacher_photo

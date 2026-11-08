@@ -34,6 +34,21 @@ $classStmt = $pdo->prepare(
 );
 $classStmt->execute([$teacherId, (int) $user['id']]);
 $classes = $classStmt->fetchAll();
+$requestedClassId = filter_var(
+    is_string($_GET['class_id'] ?? null) ? $_GET['class_id'] : '',
+    FILTER_VALIDATE_INT
+);
+$profileClassId = (int) $classes[0]['id'];
+foreach ($classes as $class) {
+    if ($requestedClassId && (int) $class['id'] === $requestedClassId) {
+        $profileClassId = (int) $class['id'];
+        break;
+    }
+}
+$backUrl = 'class-details.php?' . http_build_query([
+    'id' => $profileClassId,
+    'tab' => 'colleagues',
+]);
 
 $pageTitle = 'Teacher Profile';
 $activePage = 'my-class';
@@ -41,6 +56,7 @@ include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
 ?>
 <main class="main-content">
+    <a class="btn-back profile-back" href="<?= e($backUrl) ?>">← Back to Colleagues</a>
     <div class="page-header">
         <h2><?= e($teacher['full_name']) ?></h2>
         <p>Instructor contact information for your classes.</p>
@@ -52,7 +68,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 $teacher['profile_photo_path'],
                 (int) $teacher['id'],
                 '../',
-                (int) $classes[0]['id']
+                $profileClassId
             ); ?>
             <?php if ($teacherPhoto): ?>
                 <img class="person-photo person-photo-large" src="<?= e($teacherPhoto) ?>" alt="">
