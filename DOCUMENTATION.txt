@@ -64,10 +64,18 @@ Administrator / Dean
   - Sign in to open the administration dashboard.
   - Manage user accounts and classes.
   - Enroll students into classes.
+  - Use School Calendar to manage events shared with administrators and the dean.
 
 Teacher
   - Open the dashboard to review assigned classes and activity.
-  - Use Students to view students enrolled in assigned classes.
+  - Open My Classes to see each assigned class and jump to its students,
+    assignments, quizzes, or learning materials. Class links keep the selected
+    class active in the related teacher tools.
+  - Use Students to view students enrolled in one class or across all assigned
+    classes.
+  - Use Academic Calendar to view class deadlines and manage events shared with
+    other teachers.
+  - Expand the event count on a busy calendar day to view the remaining events.
   - Use Assignments to create class work with instructions, deadlines, and an
     optional attachment.
   - Use Learning Materials to upload and share class resources.
@@ -77,6 +85,8 @@ Teacher
 
 Student
   - Open My Classes to view enrolled classes and class details.
+  - Use Calendar to review class assignment and quiz deadlines and manage
+    events shared with other students.
   - Open Lessons to download materials shared by a teacher.
   - Use To Do, Tasks, and Quizzes to review upcoming or due work.
   - Submit assignment files before the deadline.
@@ -97,11 +107,13 @@ current schema, including quiz tables and demo seed data.
 The files in database/migrations are for upgrading an existing database:
   1. database/migrations/2026_11_create_quizzes.sql
   2. database/migrations/2026_11_quiz_attempt_timing.sql
+  3. database/migrations/2026_11_create_calendar_events.sql
 
-Apply the quiz table migration first, then the timing migration. The second
-migration alters quiz_attempts and is not intended to be run repeatedly. Back
+Apply the quiz table migration first, then the timing migration. The timing
+migration alters quiz_attempts and is not intended to be run repeatedly. Apply
+the calendar events migration to enable persistent role-specific events. Back
 up the database before applying migrations, and verify that the target database
-has not already received the changes.
+has not already received each change.
 
 FILE UPLOADS
 ------------

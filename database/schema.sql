@@ -138,6 +138,20 @@ CREATE TABLE IF NOT EXISTS `quiz_answers` (
     FOREIGN KEY (`question_id`) REFERENCES `quiz_questions`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- 8. Role-specific calendar events
+CREATE TABLE IF NOT EXISTS `calendar_events` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `role_scope` ENUM('admin', 'teacher', 'student') NOT NULL,
+    `title` VARCHAR(160) NOT NULL,
+    `description` TEXT NULL,
+    `event_date` DATE NOT NULL,
+    `created_by` INT NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_calendar_events_scope_date` (`role_scope`, `event_date`),
+    FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 -- Seed Default Accounts (Default password for all demo accounts is 'password123')
 INSERT INTO `users` (`user_code`, `full_name`, `email`, `password`, `role`) VALUES
 ('ADMIN-01', 'System Administrator', 'admin@eguro.edu.ph', '$2y$12$KRv2jRc9oCuq5qNFBjSVXOFRz6l20qpYf1LjtM4Xp0nzHEiI5m9tC', 'admin'),

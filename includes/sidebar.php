@@ -13,6 +13,7 @@ $menus = [
     'admin' => [
         'Main Navigation' => [
             'dashboard' => ['Dashboard Overview', $basePath . 'admin/dashboard.php'],
+            'calendar'  => ['School Calendar',   $basePath . 'admin/calendar.php'],
             'accounts'  => ['User Accounts',     $basePath . 'admin/dashboard.php#accounts'],
             'classes'   => ['Class Management',  $basePath . 'admin/dashboard.php#classes'],
         ]
@@ -20,7 +21,7 @@ $menus = [
     'teacher' => [
         'Teacher Management' => [
             'dashboard' => ['Overview',          $basePath . 'teacher/dashboard.php'],
-            'classes'   => ['My Classes',        $basePath . 'teacher/dashboard.php#classes'],
+            'classes'   => ['My Classes',        $basePath . 'teacher/my-classes.php'],
             'students'  => ['Student List',      $basePath . 'teacher/students.php'],
             'calendar'  => ['Academic Calendar', $basePath . 'teacher/calendar.php'],
             'assignments' => ['Assignments', $basePath . 'teacher/assignments.php'],

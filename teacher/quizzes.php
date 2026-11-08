@@ -3,6 +3,7 @@ require_once __DIR__ . '/../includes/teacher_init.php';
 
 $pageTitle = 'Quiz Builder';
 $activePage = 'quizzes';
+$selectedClassId = teacher_selected_class_id($classes);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     teacher_verify_csrf();
@@ -14,6 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $deadline = DateTime::createFromFormat('!Y-m-d\TH:i', $deadlineInput);
     $questions = $_POST['questions'] ?? [];
     $classIds = array_map('intval', array_column($classes, 'id'));
+    $returnClassId = $classId && in_array((int) $classId, $classIds, true)
+        ? (int) $classId
+        : $selectedClassId;
 
     $valid = $classId && in_array($classId, $classIds, true)
         && $title !== '' && mb_strlen($title) <= 200
@@ -73,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$valid) {
-        teacher_flash_redirect('quizzes.php', 'Check the quiz details: add a future due date, select your class, and provide 1–30 complete questions.', true);
+        teacher_flash_redirect(teacher_class_page('quizzes.php', $returnClassId), 'Check the quiz details: add a future due date, select your class, and provide 1–30 complete questions.', true);
     }
 
     try {
@@ -115,27 +119,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         $pdo->commit();
-        teacher_flash_redirect('quizzes.php', 'Quiz created successfully.');
+        teacher_flash_redirect(teacher_class_page('quizzes.php', $classId), 'Quiz created successfully.');
     } catch (PDOException $exception) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
         error_log('Teacher quiz creation failed: ' . $exception->getMessage());
-        teacher_flash_redirect('quizzes.php', 'The quiz could not be saved. Check your database setup and try again.', true);
+        teacher_flash_redirect(teacher_class_page('quizzes.php', $classId), 'The quiz could not be saved. Check your database setup and try again.', true);
     }
 }
 
-$stmt = $pdo->prepare(
-    'SELECT q.id, q.title, q.description, q.deadline, q.duration_minutes, q.created_at,
-            c.code,
-            (SELECT COUNT(*) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS question_count,
-            (SELECT COALESCE(SUM(qq.points), 0) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS total_points
-     FROM quizzes q
-     JOIN classes c ON c.id = q.class_id
-     WHERE q.created_by = ? AND c.teacher_id = ?
-     ORDER BY q.created_at DESC'
-);
-$stmt->execute([$user['id'], $user['id']]);
+if ($selectedClassId !== null) {
+    $stmt = $pdo->prepare(
+        'SELECT q.id, q.title, q.description, q.deadline, q.duration_minutes, q.created_at,
+                c.code,
+                (SELECT COUNT(*) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS question_count,
+                (SELECT COALESCE(SUM(qq.points), 0) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS total_points
+         FROM quizzes q
+         JOIN classes c ON c.id = q.class_id
+         WHERE q.created_by = ? AND c.teacher_id = ? AND c.id = ?
+         ORDER BY q.created_at DESC'
+    );
+    $stmt->execute([$user['id'], $user['id'], $selectedClassId]);
+} else {
+    $stmt = $pdo->prepare(
+        'SELECT q.id, q.title, q.description, q.deadline, q.duration_minutes, q.created_at,
+                c.code,
+                (SELECT COUNT(*) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS question_count,
+                (SELECT COALESCE(SUM(qq.points), 0) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS total_points
+         FROM quizzes q
+         JOIN classes c ON c.id = q.class_id
+         WHERE q.created_by = ? AND c.teacher_id = ?
+         ORDER BY q.created_at DESC'
+    );
+    $stmt->execute([$user['id'], $user['id']]);
+}
 $quizzes = $stmt->fetchAll();
 $flash = $_SESSION['teacher_flash'] ?? null;
 unset($_SESSION['teacher_flash']);
@@ -170,7 +188,7 @@ include __DIR__ . '/../includes/sidebar.php';
                         <label for="quiz-class">Class</label>
                         <select id="quiz-class" name="class_id" required>
                             <?php foreach ($classes as $class): ?>
-                                <option value="<?= (int) $class['id'] ?>"><?= e($class['code'] . ' · ' . $class['name']) ?></option>
+                                <option value="<?= (int) $class['id'] ?>" <?= $selectedClassId === (int) $class['id'] ? 'selected' : '' ?>><?= e($class['code'] . ' · ' . $class['name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

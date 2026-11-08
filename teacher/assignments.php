@@ -3,6 +3,7 @@ require_once __DIR__ . '/../includes/teacher_init.php';
 
 $pageTitle = 'Assignments';
 $activePage = 'assignments';
+$selectedClassId = teacher_selected_class_id($classes);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     teacher_verify_csrf();
     $classId = filter_var($_POST['class_id'] ?? null, FILTER_VALIDATE_INT);
@@ -11,8 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $deadlineInput = trim($_POST['deadline'] ?? '');
     $deadline = DateTime::createFromFormat('Y-m-d\TH:i', $deadlineInput);
     $classIds = array_map('intval', array_column($classes, 'id'));
+    $returnClassId = $classId && in_array((int) $classId, $classIds, true)
+        ? (int) $classId
+        : $selectedClassId;
     if (!$classId || !in_array($classId, $classIds, true) || $title === '' || !$deadline || $deadline <= new DateTime()) {
-        teacher_flash_redirect('assignments.php', 'Select your class, enter a title, and choose a future deadline.', true);
+        teacher_flash_redirect(teacher_class_page('assignments.php', $returnClassId), 'Select your class, enter a title, and choose a future deadline.', true);
     }
     try {
         $filePath = store_teacher_upload($_FILES['attachment'] ?? [], 'assignments');
@@ -28,21 +32,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $deadline->format('Y-m-d H:i:s'),
             $user['id'],
         ]);
-        teacher_flash_redirect('assignments.php', 'Assignment created successfully.');
+        teacher_flash_redirect(teacher_class_page('assignments.php', $classId), 'Assignment created successfully.');
     } catch (RuntimeException $exception) {
-        teacher_flash_redirect('assignments.php', $exception->getMessage(), true);
+        teacher_flash_redirect(teacher_class_page('assignments.php', $classId), $exception->getMessage(), true);
     } catch (PDOException $exception) {
         error_log('Teacher assignment creation failed: ' . $exception->getMessage());
-        teacher_flash_redirect('assignments.php', 'The assignment could not be saved. Please try again.', true);
+        teacher_flash_redirect(teacher_class_page('assignments.php', $classId), 'The assignment could not be saved. Please try again.', true);
     }
 }
 
-$stmt = $pdo->prepare(
-    'SELECT a.title, a.instructions, a.file_path, a.deadline, c.code
-     FROM assignments a JOIN classes c ON c.id = a.class_id
-     WHERE c.teacher_id = ? ORDER BY a.deadline DESC'
-);
-$stmt->execute([$user['id']]);
+if ($selectedClassId !== null) {
+    $stmt = $pdo->prepare(
+        'SELECT a.title, a.instructions, a.file_path, a.deadline, c.code
+         FROM assignments a JOIN classes c ON c.id = a.class_id
+         WHERE c.teacher_id = ? AND c.id = ? ORDER BY a.deadline DESC'
+    );
+    $stmt->execute([$user['id'], $selectedClassId]);
+} else {
+    $stmt = $pdo->prepare(
+        'SELECT a.title, a.instructions, a.file_path, a.deadline, c.code
+         FROM assignments a JOIN classes c ON c.id = a.class_id
+         WHERE c.teacher_id = ? ORDER BY a.deadline DESC'
+    );
+    $stmt->execute([$user['id']]);
+}
 $assignments = $stmt->fetchAll();
 $flash = $_SESSION['teacher_flash'] ?? null;
 unset($_SESSION['teacher_flash']);
@@ -59,7 +72,7 @@ include __DIR__ . '/../includes/sidebar.php';
         <form class="card form" method="post" enctype="multipart/form-data">
             <?= csrf_field() ?>
             <div class="field"><label for="class-id">Class</label><select id="class-id" name="class_id" required>
-                <?php foreach ($classes as $class): ?><option value="<?= (int) $class['id'] ?>"><?= e($class['code'] . ' — ' . $class['name']) ?></option><?php endforeach; ?>
+                <?php foreach ($classes as $class): ?><option value="<?= (int) $class['id'] ?>" <?= $selectedClassId === (int) $class['id'] ? 'selected' : '' ?>><?= e($class['code'] . ' — ' . $class['name']) ?></option><?php endforeach; ?>
             </select></div>
             <div class="field"><label for="title">Assignment title</label><input id="title" name="title" maxlength="200" required></div>
             <div class="field"><label for="instructions">Instructions</label><textarea id="instructions" name="instructions" rows="4"></textarea></div>

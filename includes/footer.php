@@ -11,5 +11,6 @@ $extraJs  = $extraJs ?? [];         // e.g. ['dashboard.js']
 <?php foreach ($extraJs as $js): ?>
 <script src="<?= e($basePath) ?>assets/js/<?= e($js) ?>"></script>
 <?php endforeach; ?>
+<script src="<?= e($basePath) ?>assets/js/sidebar-nav.js?v=<?= (int) filemtime(__DIR__ . '/../assets/js/sidebar-nav.js') ?>" defer></script>
 </body>
 </html>

@@ -182,11 +182,6 @@ function get_notifications(): array
     ];
 }
 
-function get_calendar_events(): array
-{
-    return [['[DATE]', '[EVENT]']];
-}
-
 function get_oer_resources(): array
 {
     return [

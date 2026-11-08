@@ -21,6 +21,22 @@ $classQuery = $pdo->prepare(
 $classQuery->execute([$user['id']]);
 $classes = $classQuery->fetchAll();
 
+function teacher_selected_class_id(array $classes): ?int
+{
+    $rawClassId = $_GET['class_id'] ?? null;
+    $classId = filter_var(is_scalar($rawClassId) ? (string) $rawClassId : '', FILTER_VALIDATE_INT);
+    $classIds = array_map('intval', array_column($classes, 'id'));
+
+    return $classId !== false && in_array((int) $classId, $classIds, true)
+        ? (int) $classId
+        : null;
+}
+
+function teacher_class_page(string $page, ?int $classId): string
+{
+    return $classId === null ? $page : $page . '?class_id=' . $classId;
+}
+
 function store_teacher_upload(array $file, string $folder): string
 {
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {

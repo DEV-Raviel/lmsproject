@@ -60,13 +60,13 @@ include __DIR__ . '/../includes/sidebar.php';
         <div class="section-break-title">Teaching Overview</div>
         <div class="card-grid">
             <?php foreach ([
-                ['MY CLASSES', count($classes), 'Assigned sections', 'dashboard', 'View Classes'],
+                ['MY CLASSES', count($classes), 'Assigned sections', 'my-classes.php', 'View Classes'],
                 ['STUDENTS', $studentCount, 'Across your classes', 'students.php', 'View Students'],
                 ['ASSIGNMENTS', $assignmentCount, 'Created activities', 'assignments.php', 'Manage Assignments'],
                 ['QUIZZES', $quizCount, 'Knowledge checks', 'quizzes.php', 'Build a Quiz'],
                 ['MATERIALS', $materialCount, 'Class resources', 'learning-materials.php', 'Manage Materials'],
             ] as [$label, $count, $caption, $href, $action]): ?>
-                <a class="card sub-card metric-card status-assigned" href="<?= e($href === 'dashboard' ? '#classes' : $href) ?>">
+                <a class="card sub-card metric-card status-assigned" href="<?= e($href) ?>">
                     <div class="metric-card-top"><span class="metric-label"><?= e($label) ?></span><span class="metric-caption"><?= e($caption) ?></span></div>
                     <div class="metric-value"><?= (int) $count ?></div>
                     <div class="metric-card-footer"><span class="metric-action"><?= e($action) ?> &rarr;</span></div>
@@ -74,7 +74,10 @@ include __DIR__ . '/../includes/sidebar.php';
             <?php endforeach; ?>
         </div>
 
-        <div class="section-break-title" id="classes">My Classes</div>
+        <div class="section-break-title dashboard-section-heading" id="classes">
+            <span>My Classes</span>
+            <a class="btn btn-outline btn-sm" href="my-classes.php">Open My Classes</a>
+        </div>
         <div class="table-responsive">
             <table class="data-table">
                 <thead><tr><th>Class</th><th>Subject</th><th>Term</th><th>Students</th></tr></thead>
