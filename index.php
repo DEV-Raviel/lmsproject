@@ -177,51 +177,6 @@ if (isset($_GET['error'])) {
             text-align: left;
         }
 
-        /* Demo login section styled to match the light theme */
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            margin: 32px 0 24px;
-        }
-
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .divider span {
-            padding: 0 16px;
-            color: var(--text-secondary);
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-        }
-
-        .demo-btns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .btn-demo {
-            background-color: #f7f9fc;
-            border: 1px solid #b8c8dd;
-            color: var(--logo-bg);
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-demo:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            background-color: #eaf1fa;
-        }
     </style>
 </head>
 <body>
@@ -255,21 +210,6 @@ if (isset($_GET['error'])) {
 
             <button type="submit" class="btn-submit">Sign In</button>
         </form>
-
-        <div class="divider"><span>QUICK DEMO LOGINS</span></div>
-        <div class="demo-btns">
-            <button type="button" class="btn-demo" onclick="fillDemo('ADMIN-01')">Administrator</button>
-            <button type="button" class="btn-demo" onclick="fillDemo('DEAN-01')">Dean</button>
-            <button type="button" class="btn-demo" onclick="fillDemo('TECH-01')">Teacher</button>
-            <button type="button" class="btn-demo" onclick="fillDemo('2026-001')">Student</button>
-        </div>
     </div>
-
-    <script>
-        function fillDemo(code) {
-            document.getElementById('loginIdentifier').value = code;
-            document.getElementById('loginPassword').value = 'password123';
-        }
-    </script>
 </body>
 </html>
