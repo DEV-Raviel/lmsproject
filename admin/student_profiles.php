@@ -19,6 +19,16 @@ $students = $pdo->query(
      WHERE u.role = 'student'
      ORDER BY u.full_name"
 )->fetchAll();
+$studentSearch = is_string($_GET['q'] ?? null) ? mb_substr(trim($_GET['q']), 0, 100) : '';
+$visibleStudents = $studentSearch === ''
+    ? $students
+    : array_values(array_filter(
+        $students,
+        static fn(array $student): bool =>
+            mb_stripos($student['user_code'], $studentSearch) !== false
+            || mb_stripos($student['full_name'], $studentSearch) !== false
+            || mb_stripos($student['email'], $studentSearch) !== false
+    ));
 
 $selectedStudent = null;
 $profile = [];
@@ -116,7 +126,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 <?php endforeach; ?>
                 <div class="form-actions">
                     <button class="btn" type="submit">Save profile</button>
-                    <a class="btn btn-outline" href="student_profiles.php">Back to students</a>
+                    <a class="btn btn-outline" href="student_profiles.php<?= $studentSearch !== '' ? '?q=' . rawurlencode($studentSearch) : '' ?>">Back to students</a>
                 </div>
             </form>
         </section>
@@ -127,11 +137,22 @@ include __DIR__ . '/../includes/sidebar.php';
         <?php if (!$students): ?>
             <p>No student accounts are available yet.</p>
         <?php else: ?>
+            <details class="filter-disclosure" <?= $studentSearch !== '' ? 'open' : '' ?>>
+                <summary>Filters</summary>
+                <form class="list-filter-form" method="get">
+                    <label>
+                        <span>Search students</span>
+                        <input type="search" name="q" value="<?= e($studentSearch) ?>" maxlength="100" placeholder="Name, user code, or email">
+                    </label>
+                    <button class="btn" type="submit">Search</button>
+                    <a class="btn btn-outline" href="student_profiles.php">Clear</a>
+                </form>
+            </details>
             <div class="table-responsive">
                 <table class="data-table">
                     <thead><tr><th>Student</th><th>Email</th><th>Profile fields</th><th>Action</th></tr></thead>
                     <tbody>
-                    <?php foreach ($students as $student):
+                    <?php foreach ($visibleStudents as $student):
                         $providedCount = count(array_filter(
                             array_keys(student_profile_fields()),
                             static fn(string $key): bool => isset($student[$key]) && trim((string) $student[$key]) !== ''
@@ -141,9 +162,10 @@ include __DIR__ . '/../includes/sidebar.php';
                             <td><strong><?= e($student['full_name']) ?></strong><br><span class="muted"><?= e($student['user_code']) ?></span></td>
                             <td><?= e($student['email']) ?></td>
                             <td><?= $providedCount ?> of <?= count(student_profile_fields()) ?></td>
-                            <td><a class="btn btn-outline btn-sm" href="student_profiles.php?user_id=<?= (int) $student['id'] ?>">Edit profile</a></td>
+                            <td><a class="btn btn-outline btn-sm" href="student_profiles.php?user_id=<?= (int) $student['id'] ?><?= $studentSearch !== '' ? '&q=' . rawurlencode($studentSearch) : '' ?>">Edit profile</a></td>
                         </tr>
                     <?php endforeach; ?>
+                    <?php if (!$visibleStudents): ?><tr><td colspan="4">No students match this search.</td></tr><?php endif; ?>
                     </tbody>
                 </table>
             </div>

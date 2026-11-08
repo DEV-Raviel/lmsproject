@@ -4,14 +4,17 @@ require_once __DIR__ . '/../includes/student_init.php';
 $pageTitle  = 'To Do';
 $activePage = 'todo';
 
-// 1. Get the current filter from the URL (default to 'all' if not set)
-$currentFilter = $_GET['filter'] ?? 'all';
+// Keep the filter vocabulary constrained to the views shown in the form.
+$currentFilter = is_string($_GET['filter'] ?? null) ? $_GET['filter'] : 'all';
+if (!in_array($currentFilter, ['all', 'due-today', 'assigned', 'missed'], true)) {
+    $currentFilter = 'all';
+}
+$search = is_string($_GET['q'] ?? null) ? mb_substr(trim($_GET['q']), 0, 100) : '';
 
-// 2. Fetch tasks from all categories
-// Assuming your system supports 'missed'. If not, you can adjust or add it to get_tasks()
-$dueToday = function_exists('get_tasks') ? get_tasks('due-today') : [];
-$assigned = function_exists('get_tasks') ? get_tasks('assigned') : [];
-$missed   = function_exists('get_tasks') ? get_tasks('missed') : [];
+// Fetch the supported task categories.
+$dueToday = get_tasks('due-today', $search);
+$assigned = get_tasks('assigned', $search);
+$missed   = get_tasks('missed', $search);
 
 // Combine all tasks for the 'all' view and sort by deadline (closest first)
 $allTasks = array_merge($missed, $dueToday, $assigned);
@@ -21,7 +24,7 @@ usort($allTasks, function($a, $b) {
     return $timeA <=> $timeB;
 });
 
-// 3. Select which rows to display based on the dropdown choice
+// Select the requested view.
 $displayTasks = [];
 switch ($currentFilter) {
     case 'due-today':
@@ -58,25 +61,33 @@ include __DIR__ . '/../includes/sidebar.php';
 <main class="main-content">
     <h2>To Do</h2>
 
-    <!-- Google Classroom Style Dropdown Filter -->
-    <div class="todo-filter-container" style="margin-bottom: 20px;">
-        <label for="todoFilter" style="font-weight: bold; margin-right: 8px;">Filter:</label>
-        <select id="todoFilter" onchange="location = this.value;" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #ccc;">
-            <option value="?filter=all" <?php echo $currentFilter === 'all' ? 'selected' : ''; ?>>All (Sorted by deadline)</option>
-            <option value="?filter=due-today" <?php echo $currentFilter === 'due-today' ? 'selected' : ''; ?>>Due Today</option>
-            <option value="?filter=assigned" <?php echo $currentFilter === 'assigned' ? 'selected' : ''; ?>>Assigned</option>
-            <option value="?filter=missed" <?php echo $currentFilter === 'missed' ? 'selected' : ''; ?>>Missed</option>
-        </select>
-    </div>
+    <details class="filter-disclosure" <?= ($currentFilter !== 'all' || $search !== '') ? 'open' : '' ?>>
+        <summary>Filters</summary>
+        <form class="list-filter-form" method="get">
+            <label>
+                <span>Search tasks</span>
+                <input type="search" name="q" value="<?= e($search) ?>" maxlength="100" placeholder="Task or class">
+            </label>
+            <label>
+                <span>Due date</span>
+                <select name="filter">
+                    <option value="all" <?= $currentFilter === 'all' ? 'selected' : '' ?>>All</option>
+                    <option value="due-today" <?= $currentFilter === 'due-today' ? 'selected' : '' ?>>Due today</option>
+                    <option value="assigned" <?= $currentFilter === 'assigned' ? 'selected' : '' ?>>Upcoming</option>
+                    <option value="missed" <?= $currentFilter === 'missed' ? 'selected' : '' ?>>Past due</option>
+                </select>
+            </label>
+            <button class="btn" type="submit">Apply filters</button>
+            <a class="btn btn-outline" href="todo.php">Clear</a>
+        </form>
+    </details>
 
     <h3>Activity and Quiz</h3>
-    <?php
-    if (!empty($rows)) {
-        render_table(['Task', 'Subject', 'Due Date', 'Status'], $rows);
-    } else {
-        echo '<p style="color: #666; font-style: italic;">No tasks found for this filter.</p>';
-    }
-    ?>
+    <?php render_table(
+        ['Task', 'Subject', 'Due Date', 'Status'],
+        $rows,
+        $search !== '' || $currentFilter !== 'all' ? 'No tasks match these filters.' : 'You are all caught up.'
+    ); ?>
 
     <h3>Quizzes</h3>
     <p>

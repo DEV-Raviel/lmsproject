@@ -74,6 +74,9 @@ Sign-in and security
 
 Administrator
   - Use User Management to create and manage accounts, classes, and enrollments.
+  - Use Filters to search accounts by name, code, email, or role and classes by
+    code, subject, teacher, semester, or academic year.
+  - Search the Student Profiles list by student name, user code, or email.
   - New accounts receive a random temporary password shown to the Administrator
     once. The user must change it before opening any role pages.
   - Enroll multiple students into a class by pasting up to 200 student user
@@ -98,6 +101,8 @@ Teacher
     class active in the related teacher tools.
   - Use Students to view students enrolled in one class or across all assigned
     classes.
+  - Use Filters on the student, assignment, quiz, learning-material, and
+    gradebook lists to narrow results by class or relevant text.
   - Use Academic Calendar to view class deadlines, teacher-only events, and
     school-wide events. School-wide events are read-only.
   - Add private personal tasks on the calendar to track teaching work. Due
@@ -130,6 +135,8 @@ Student
     answer key.
   - Open Grade Report to view assignment scores, quiz scores, due dates, and
     submission status for enrolled classes.
+  - Use Filters on To Do, Tasks, Quizzes, Lessons, and Grade Report to find work
+    by title, class, teacher, or status.
 
 Teacher and student pages share the same overall visual style, but the
 available data, actions, and dashboard labels depend on the signed-in role.

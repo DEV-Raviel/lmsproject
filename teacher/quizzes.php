@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/teacher_init.php';
 $pageTitle = 'Quiz Builder';
 $activePage = 'quizzes';
 $selectedClassId = teacher_selected_class_id($classes);
+$search = is_string($_GET['q'] ?? null) ? mb_substr(trim($_GET['q']), 0, 100) : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     teacher_verify_csrf();
@@ -129,31 +130,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$query = 'SELECT q.id, q.title, q.description, q.deadline, q.duration_minutes, q.created_at,
+                 c.code,
+                 (SELECT COUNT(*) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS question_count,
+                 (SELECT COALESCE(SUM(qq.points), 0) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS total_points
+          FROM quizzes q
+          JOIN classes c ON c.id = q.class_id
+          WHERE q.created_by = ? AND c.teacher_id = ?';
+$parameters = [$user['id'], $user['id']];
 if ($selectedClassId !== null) {
-    $stmt = $pdo->prepare(
-        'SELECT q.id, q.title, q.description, q.deadline, q.duration_minutes, q.created_at,
-                c.code,
-                (SELECT COUNT(*) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS question_count,
-                (SELECT COALESCE(SUM(qq.points), 0) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS total_points
-         FROM quizzes q
-         JOIN classes c ON c.id = q.class_id
-         WHERE q.created_by = ? AND c.teacher_id = ? AND c.id = ?
-         ORDER BY q.created_at DESC'
-    );
-    $stmt->execute([$user['id'], $user['id'], $selectedClassId]);
-} else {
-    $stmt = $pdo->prepare(
-        'SELECT q.id, q.title, q.description, q.deadline, q.duration_minutes, q.created_at,
-                c.code,
-                (SELECT COUNT(*) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS question_count,
-                (SELECT COALESCE(SUM(qq.points), 0) FROM quiz_questions qq WHERE qq.quiz_id = q.id) AS total_points
-         FROM quizzes q
-         JOIN classes c ON c.id = q.class_id
-         WHERE q.created_by = ? AND c.teacher_id = ?
-         ORDER BY q.created_at DESC'
-    );
-    $stmt->execute([$user['id'], $user['id']]);
+    $query .= ' AND c.id = ?';
+    $parameters[] = $selectedClassId;
 }
+$query .= $search !== '' ? ' AND (q.title LIKE ? OR q.description LIKE ? OR c.code LIKE ?)' : '';
+if ($search !== '') {
+    $term = '%' . $search . '%';
+    array_push($parameters, $term, $term, $term);
+}
+$query .= ' ORDER BY q.created_at DESC';
+$stmt = $pdo->prepare($query);
+$stmt->execute($parameters);
 $quizzes = $stmt->fetchAll();
 $flash = $_SESSION['teacher_flash'] ?? null;
 unset($_SESSION['teacher_flash']);
@@ -227,6 +223,28 @@ include __DIR__ . '/../includes/sidebar.php';
             <span class="step-number">✓</span>
             <div><h3>Your quizzes</h3><p>Quizzes you have created for your classes.</p></div>
         </div>
+        <details class="filter-disclosure" <?= ($search !== '' || $selectedClassId !== null) ? 'open' : '' ?>>
+            <summary>Filters</summary>
+            <form class="list-filter-form" method="get">
+                <label>
+                    <span>Search quizzes</span>
+                    <input type="search" name="q" value="<?= e($search) ?>" maxlength="100" placeholder="Title, instructions, or class">
+                </label>
+                <label>
+                    <span>Class</span>
+                    <select name="class_id">
+                        <option value="">All my classes</option>
+                        <?php foreach ($classes as $class): ?>
+                            <option value="<?= (int) $class['id'] ?>" <?= $selectedClassId === (int) $class['id'] ? 'selected' : '' ?>>
+                                <?= e($class['code'] . ' — ' . $class['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <button class="btn" type="submit">Apply filters</button>
+                <a class="btn btn-outline" href="quizzes.php">Clear</a>
+            </form>
+        </details>
         <?php if ($quizzes): ?>
             <div class="quiz-list">
                 <?php foreach ($quizzes as $quiz): ?>
@@ -244,7 +262,10 @@ include __DIR__ . '/../includes/sidebar.php';
                 <?php endforeach; ?>
             </div>
         <?php else: ?>
-            <div class="empty-state"><strong>Your quiz list is ready</strong><p>Quizzes you create will appear here.</p></div>
+            <div class="empty-state">
+                <strong><?= $search !== '' || $selectedClassId !== null ? 'No quizzes match these filters' : 'Your quiz list is ready' ?></strong>
+                <p><?= $search !== '' || $selectedClassId !== null ? 'Try changing or clearing your filters.' : 'Quizzes you create will appear here.' ?></p>
+            </div>
         <?php endif; ?>
     </section>
 </main>

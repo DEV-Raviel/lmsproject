@@ -10,6 +10,12 @@ $activePage = 'accounts';
 $pdo = Database::connect();
 $flash = $_SESSION['admin_flash'] ?? null;
 unset($_SESSION['admin_flash']);
+$accountSearch = is_string($_GET['account_q'] ?? null) ? mb_substr(trim($_GET['account_q']), 0, 100) : '';
+$accountRole = is_string($_GET['account_role'] ?? null) ? $_GET['account_role'] : '';
+if (!in_array($accountRole, ['admin', 'dean', 'teacher', 'student'], true)) {
+    $accountRole = '';
+}
+$classSearch = is_string($_GET['class_q'] ?? null) ? mb_substr(trim($_GET['class_q']), 0, 100) : '';
 
 $metrics = $pdo->query(
     "SELECT
@@ -20,12 +26,23 @@ $metrics = $pdo->query(
 )->fetch();
 $metrics['classes'] = (int) $pdo->query('SELECT COUNT(*) FROM classes')->fetchColumn();
 
-$users = $pdo->query(
-    'SELECT id, user_code, full_name, email, role, created_at
-     FROM users ORDER BY created_at DESC, id DESC'
-)->fetchAll();
-$classes = $pdo->query(
-    'SELECT c.id, c.code, c.name, c.semester, c.fiscal_year,
+$userQuery = 'SELECT id, user_code, full_name, email, role, created_at FROM users WHERE 1 = 1';
+$userParameters = [];
+if ($accountSearch !== '') {
+    $userQuery .= ' AND (user_code LIKE ? OR full_name LIKE ? OR email LIKE ?)';
+    $term = '%' . $accountSearch . '%';
+    array_push($userParameters, $term, $term, $term);
+}
+if ($accountRole !== '') {
+    $userQuery .= ' AND role = ?';
+    $userParameters[] = $accountRole;
+}
+$userQuery .= ' ORDER BY created_at DESC, id DESC';
+$userStmt = $pdo->prepare($userQuery);
+$userStmt->execute($userParameters);
+$users = $userStmt->fetchAll();
+
+$classQuery = 'SELECT c.id, c.code, c.name, c.semester, c.fiscal_year,
             u.full_name AS teacher_name, COALESCE(enrollment_counts.students_count, 0) AS students_count
      FROM classes c
      LEFT JOIN users u ON u.id = c.teacher_id
@@ -34,8 +51,17 @@ $classes = $pdo->query(
          FROM class_enrollments
          GROUP BY class_id
      ) enrollment_counts ON enrollment_counts.class_id = c.id
-     ORDER BY c.code'
-)->fetchAll();
+     WHERE 1 = 1';
+$classParameters = [];
+if ($classSearch !== '') {
+    $classQuery .= ' AND (c.code LIKE ? OR c.name LIKE ? OR c.semester LIKE ? OR c.fiscal_year LIKE ? OR u.full_name LIKE ?)';
+    $term = '%' . $classSearch . '%';
+    array_push($classParameters, $term, $term, $term, $term, $term);
+}
+$classQuery .= ' ORDER BY c.code';
+$classStmt = $pdo->prepare($classQuery);
+$classStmt->execute($classParameters);
+$classes = $classStmt->fetchAll();
 $teachers = $pdo->query(
     "SELECT id, user_code, full_name FROM users WHERE role = 'teacher' ORDER BY full_name"
 )->fetchAll();
@@ -83,7 +109,7 @@ include __DIR__ . '/../includes/sidebar.php';
     <section id="accounts">
         <div class="admin-section-heading">
             <h3>Accounts</h3>
-            <span><?= count($users) ?> total</span>
+            <span><?= count($users) ?> shown</span>
         </div>
         <details class="admin-disclosure">
             <summary>Create account <span class="disclosure-indicator" aria-hidden="true"></span></summary>
@@ -115,8 +141,28 @@ include __DIR__ . '/../includes/sidebar.php';
             </form>
         </details>
 
-        <details class="admin-list-disclosure">
+        <details class="admin-list-disclosure" <?= ($accountSearch !== '' || $accountRole !== '') ? 'open' : '' ?>>
             <summary>View accounts <span class="disclosure-indicator" aria-hidden="true"></span></summary>
+            <details class="filter-disclosure" <?= ($accountSearch !== '' || $accountRole !== '') ? 'open' : '' ?>>
+                <summary>Filters</summary>
+                <form class="list-filter-form" method="get">
+                    <label>
+                        <span>Search accounts</span>
+                        <input type="search" name="account_q" value="<?= e($accountSearch) ?>" maxlength="100" placeholder="Name, user code, or email">
+                    </label>
+                    <label>
+                        <span>Role</span>
+                        <select name="account_role">
+                            <option value="">All roles</option>
+                            <?php foreach (['admin' => 'Administrator', 'dean' => 'Dean', 'teacher' => 'Teacher', 'student' => 'Student'] as $roleValue => $roleLabel): ?>
+                                <option value="<?= e($roleValue) ?>" <?= $accountRole === $roleValue ? 'selected' : '' ?>><?= e($roleLabel) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <button class="btn" type="submit">Apply filters</button>
+                    <a class="btn btn-outline" href="dashboard.php#accounts">Clear</a>
+                </form>
+            </details>
             <div class="table-responsive">
             <table class="data-table">
                 <thead><tr><th>User code</th><th>Name</th><th>Email</th><th>Role</th><th>Created</th><th>Action</th></tr></thead>
@@ -140,7 +186,7 @@ include __DIR__ . '/../includes/sidebar.php';
                         </td>
                     </tr>
                 <?php endforeach; ?>
-                <?php if (!$users): ?><tr><td colspan="6">No accounts found.</td></tr><?php endif; ?>
+                <?php if (!$users): ?><tr><td colspan="6"><?= $accountSearch !== '' || $accountRole !== '' ? 'No accounts match these filters.' : 'No accounts found.' ?></td></tr><?php endif; ?>
                 </tbody>
             </table>
             </div>
@@ -150,7 +196,7 @@ include __DIR__ . '/../includes/sidebar.php';
     <section id="classes">
         <div class="admin-section-heading">
             <h3>Classes</h3>
-            <span><?= count($classes) ?> total</span>
+            <span><?= count($classes) ?> shown</span>
         </div>
         <details class="admin-disclosure">
             <summary>Create class <span class="disclosure-indicator" aria-hidden="true"></span></summary>
@@ -186,8 +232,19 @@ include __DIR__ . '/../includes/sidebar.php';
             </form>
         </details>
 
-        <details class="admin-list-disclosure">
+        <details class="admin-list-disclosure" <?= $classSearch !== '' ? 'open' : '' ?>>
             <summary>View classes <span class="disclosure-indicator" aria-hidden="true"></span></summary>
+            <details class="filter-disclosure" <?= $classSearch !== '' ? 'open' : '' ?>>
+                <summary>Filters</summary>
+                <form class="list-filter-form" method="get">
+                    <label>
+                        <span>Search classes</span>
+                        <input type="search" name="class_q" value="<?= e($classSearch) ?>" maxlength="100" placeholder="Code, subject, teacher, or term">
+                    </label>
+                    <button class="btn" type="submit">Search</button>
+                    <a class="btn btn-outline" href="dashboard.php#classes">Clear</a>
+                </form>
+            </details>
             <div class="table-responsive">
             <table class="data-table">
                 <thead><tr><th>Code</th><th>Subject</th><th>Teacher</th><th>Term / Year</th><th>Students</th><th>Action</th></tr></thead>
@@ -243,7 +300,7 @@ include __DIR__ . '/../includes/sidebar.php';
                         </td>
                     </tr>
                 <?php endforeach; ?>
-                <?php if (!$classes): ?><tr><td colspan="6">No classes have been created.</td></tr><?php endif; ?>
+                <?php if (!$classes): ?><tr><td colspan="6"><?= $classSearch !== '' ? 'No classes match this search.' : 'No classes have been created.' ?></td></tr><?php endif; ?>
                 </tbody>
             </table>
             </div>

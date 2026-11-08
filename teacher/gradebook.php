@@ -4,6 +4,17 @@ require_once __DIR__ . '/../includes/teacher_init.php';
 $pageTitle = 'Gradebook';
 $activePage = 'gradebook';
 $selectedClassId = teacher_selected_class_id($classes);
+$search = is_string($_GET['q'] ?? null) ? mb_substr(trim($_GET['q']), 0, 100) : '';
+$gradebookPage = static function (?int $classId, string $search): string {
+    $query = [];
+    if ($classId !== null) {
+        $query['class_id'] = $classId;
+    }
+    if ($search !== '') {
+        $query['q'] = $search;
+    }
+    return 'gradebook.php' . ($query ? '?' . http_build_query($query) : '');
+};
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     teacher_verify_csrf();
@@ -12,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $score = $scoreInput !== '' ? filter_var($scoreInput, FILTER_VALIDATE_INT) : false;
 
     if (!$submissionId || $score === false || $score < 0) {
-        teacher_flash_redirect(teacher_class_page('gradebook.php', $selectedClassId), 'Enter a valid score of zero or more.', true);
+        teacher_flash_redirect($gradebookPage($selectedClassId, $search), 'Enter a valid score of zero or more.', true);
     }
 
     try {
@@ -29,12 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $submission = $submissionStmt->fetch();
         if (!$submission) {
             $pdo->rollBack();
-            teacher_flash_redirect(teacher_class_page('gradebook.php', $selectedClassId), 'That submission is not in one of your classes.', true);
+            teacher_flash_redirect($gradebookPage($selectedClassId, $search), 'That submission is not in one of your classes.', true);
         }
         if ($score > (int) $submission['points_possible']) {
             $pdo->rollBack();
             teacher_flash_redirect(
-                teacher_class_page('gradebook.php', (int) $submission['class_id']),
+                $gradebookPage((int) $submission['class_id'], $search),
                 'The score cannot exceed the assignment points possible.',
                 true
             );
@@ -44,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $updateStmt->execute([$score, $submissionId]);
         $pdo->commit();
         teacher_flash_redirect(
-            teacher_class_page('gradebook.php', (int) $submission['class_id']),
+            $gradebookPage((int) $submission['class_id'], $search),
             'Score saved successfully.'
         );
     } catch (PDOException $exception) {
@@ -52,37 +63,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->rollBack();
         }
         error_log('Teacher submission grading failed: ' . $exception->getMessage());
-        teacher_flash_redirect(teacher_class_page('gradebook.php', $selectedClassId), 'The score could not be saved. Please try again.', true);
+        teacher_flash_redirect($gradebookPage($selectedClassId, $search), 'The score could not be saved. Please try again.', true);
     }
 }
 
+$query = 'SELECT s.id AS submission_id, s.file_path, s.score, s.submitted_at,
+                 a.title AS assignment, a.points_possible, c.id AS class_id, c.code,
+                 student.full_name AS student_name, student.user_code AS student_code
+          FROM submissions s
+          JOIN assignments a ON a.id = s.assignment_id
+          JOIN classes c ON c.id = a.class_id
+          JOIN users student ON student.id = s.student_id
+          WHERE c.teacher_id = ?';
+$parameters = [$user['id']];
 if ($selectedClassId !== null) {
-    $stmt = $pdo->prepare(
-        'SELECT s.id AS submission_id, s.file_path, s.score, s.submitted_at,
-                a.title AS assignment, a.points_possible, c.id AS class_id, c.code,
-                student.full_name AS student_name, student.user_code AS student_code
-         FROM submissions s
-         JOIN assignments a ON a.id = s.assignment_id
-         JOIN classes c ON c.id = a.class_id
-         JOIN users student ON student.id = s.student_id
-         WHERE c.teacher_id = ? AND c.id = ?
-         ORDER BY a.deadline DESC, student.full_name'
-    );
-    $stmt->execute([$user['id'], $selectedClassId]);
-} else {
-    $stmt = $pdo->prepare(
-        'SELECT s.id AS submission_id, s.file_path, s.score, s.submitted_at,
-                a.title AS assignment, a.points_possible, c.id AS class_id, c.code,
-                student.full_name AS student_name, student.user_code AS student_code
-         FROM submissions s
-         JOIN assignments a ON a.id = s.assignment_id
-         JOIN classes c ON c.id = a.class_id
-         JOIN users student ON student.id = s.student_id
-         WHERE c.teacher_id = ?
-         ORDER BY a.deadline DESC, student.full_name'
-    );
-    $stmt->execute([$user['id']]);
+    $query .= ' AND c.id = ?';
+    $parameters[] = $selectedClassId;
 }
+$query .= $search !== '' ? ' AND (student.full_name LIKE ? OR student.user_code LIKE ? OR a.title LIKE ? OR c.code LIKE ?)' : '';
+if ($search !== '') {
+    $term = '%' . $search . '%';
+    array_push($parameters, $term, $term, $term, $term);
+}
+$query .= ' ORDER BY a.deadline DESC, student.full_name';
+$stmt = $pdo->prepare($query);
+$stmt->execute($parameters);
 $submissions = $stmt->fetchAll();
 $flash = $_SESSION['teacher_flash'] ?? null;
 unset($_SESSION['teacher_flash']);
@@ -99,22 +104,30 @@ include __DIR__ . '/../includes/sidebar.php';
     </div>
     <?php if ($flash): ?><p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status"><?= e($flash['message']) ?></p><?php endif; ?>
 
-    <?php if ($classes): ?>
-        <form class="card form" method="get">
-            <div class="field">
-                <label for="gradebook-class">Class</label>
-                <select id="gradebook-class" name="class_id" onchange="this.form.submit()">
-                    <option value="">All my classes</option>
-                    <?php foreach ($classes as $class): ?>
-                        <option value="<?= (int) $class['id'] ?>" <?= $selectedClassId === (int) $class['id'] ? 'selected' : '' ?>>
-                            <?= e($class['code'] . ' — ' . $class['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <noscript><button class="btn btn-outline btn-sm" type="submit">Show class</button></noscript>
-            </div>
+    <details class="filter-disclosure" <?= ($search !== '' || $selectedClassId !== null) ? 'open' : '' ?>>
+        <summary>Filters</summary>
+        <form class="list-filter-form" method="get">
+            <label>
+                <span>Search submissions</span>
+                <input type="search" name="q" value="<?= e($search) ?>" maxlength="100" placeholder="Student, assignment, or class">
+            </label>
+            <?php if ($classes): ?>
+                <label>
+                    <span>Class</span>
+                    <select id="gradebook-class" name="class_id">
+                        <option value="">All my classes</option>
+                        <?php foreach ($classes as $class): ?>
+                            <option value="<?= (int) $class['id'] ?>" <?= $selectedClassId === (int) $class['id'] ? 'selected' : '' ?>>
+                                <?= e($class['code'] . ' — ' . $class['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+            <?php endif; ?>
+            <button class="btn" type="submit">Apply filters</button>
+            <a class="btn btn-outline" href="gradebook.php">Clear</a>
         </form>
-    <?php endif; ?>
+    </details>
 
     <section class="table-responsive" aria-label="Student submissions">
         <table class="data-table">
@@ -155,7 +168,7 @@ include __DIR__ . '/../includes/sidebar.php';
                     </td>
                 </tr>
             <?php endforeach; ?>
-            <?php if (!$submissions): ?><tr><td colspan="6">No submissions in this class yet.</td></tr><?php endif; ?>
+            <?php if (!$submissions): ?><tr><td colspan="6"><?= $search !== '' || $selectedClassId !== null ? 'No submissions match these filters.' : 'No submissions in your classes yet.' ?></td></tr><?php endif; ?>
             </tbody>
         </table>
     </section>

@@ -43,12 +43,15 @@ function get_task_counts(): array
     ];
 }
 
-function get_tasks(string $view): array
+function get_tasks(string $view, string $search = ''): array
 {
     $user = current_user();
     if (!$user || !in_array($view, ['due-today', 'assigned', 'missed', 'due-assessment', 'assigned-assessment'], true)) {
         return [];
     }
+    $search = mb_substr(trim($search), 0, 100);
+    $assignmentSearchFilter = $search !== '' ? ' AND (a.title LIKE ? OR c.code LIKE ?)' : '';
+    $quizSearchFilter = $search !== '' ? ' AND (q.title LIKE ? OR c.code LIKE ?)' : '';
     [$assignmentDateFilter, $quizDateFilter] = match ($view) {
         'due-today' => ['DATE(a.deadline) = CURDATE()', 'DATE(q.deadline) = CURDATE()'],
         'assigned' => ['DATE(a.deadline) > CURDATE()', 'DATE(q.deadline) > CURDATE()'],
@@ -69,6 +72,7 @@ function get_tasks(string $view): array
          JOIN classes c ON c.id = a.class_id
          LEFT JOIN submissions s ON s.assignment_id = a.id AND s.student_id = ?
          WHERE s.id IS NULL AND $assignmentDateFilter
+           $assignmentSearchFilter
          UNION ALL
          SELECT q.id, q.title, c.code AS subject, q.deadline AS activity_deadline, 'quiz' AS task_type
          FROM quizzes q
@@ -76,9 +80,18 @@ function get_tasks(string $view): array
          JOIN classes c ON c.id = q.class_id
          LEFT JOIN quiz_attempts qa ON qa.quiz_id = q.id AND qa.student_id = ?
          WHERE qa.submitted_at IS NULL AND $quizDateFilter
+           $quizSearchFilter
          ORDER BY activity_deadline"
     );
-    $stmt->execute([$user['id'], $user['id'], $user['id'], $user['id']]);
+    $parameters = [$user['id'], $user['id']];
+    if ($search !== '') {
+        array_push($parameters, '%' . $search . '%', '%' . $search . '%');
+    }
+    array_push($parameters, $user['id'], $user['id']);
+    if ($search !== '') {
+        array_push($parameters, '%' . $search . '%', '%' . $search . '%');
+    }
+    $stmt->execute($parameters);
     $tasks = $stmt->fetchAll();
     return array_map(static function (array $task) use ($status): array {
         return [
@@ -160,15 +173,20 @@ function get_class_by_id(int $id): ?array
     return $stmt->fetch() ?: null;
 }
 
-function get_grades(): array
+function get_grades(string $search = '', string $status = ''): array
 {
     $user = current_user();
     if (!$user) {
         return [];
     }
+    $search = mb_substr(trim($search), 0, 100);
+    $allowedStatuses = ['Not submitted', 'Awaiting grade', 'Graded', 'Not started', 'In progress'];
+    if (!in_array($status, $allowedStatuses, true)) {
+        $status = '';
+    }
 
-    $stmt = Database::connect()->prepare(
-        "SELECT c.code AS subject, teacher.full_name AS teacher, a.title AS assessment,
+    $query = "SELECT * FROM (
+         SELECT c.code AS subject, teacher.full_name AS teacher, a.title AS assessment,
                 'Assignment' AS type,
                 CASE WHEN s.score IS NULL THEN '--'
                      ELSE CONCAT(s.score, '/', a.points_possible) END AS score,
@@ -197,9 +215,20 @@ function get_grades(): array
          JOIN quizzes q ON q.class_id = c.id
          LEFT JOIN quiz_attempts qa ON qa.quiz_id = q.id AND qa.student_id = ce.student_id
          WHERE ce.student_id = ?
-         ORDER BY due_date DESC, assessment"
-    );
-    $stmt->execute([$user['id'], $user['id']]);
+    ) AS grade_items WHERE 1 = 1";
+    $parameters = [$user['id'], $user['id']];
+    if ($search !== '') {
+        $query .= ' AND (subject LIKE ? OR teacher LIKE ? OR assessment LIKE ? OR type LIKE ?)';
+        $term = '%' . $search . '%';
+        array_push($parameters, $term, $term, $term, $term);
+    }
+    if ($status !== '') {
+        $query .= ' AND status = ?';
+        $parameters[] = $status;
+    }
+    $query .= ' ORDER BY due_date DESC, assessment';
+    $stmt = Database::connect()->prepare($query);
+    $stmt->execute($parameters);
     $grades = $stmt->fetchAll();
     return array_map(static function (array $grade): array {
         $grade['due_date'] = date('M j, Y g:i A', strtotime($grade['due_date']));
@@ -207,9 +236,37 @@ function get_grades(): array
     }, $grades);
 }
 
-function get_lessons(): array
+function get_lessons(string $search = ''): array
 {
-    return [['[LESSON TITLE]', '[SUBJECT]', ['href' => 'oer.php', 'text' => 'Open Resource'], 'Unread']];
+    $user = current_user();
+    if (!$user) {
+        return [];
+    }
+
+    $search = mb_substr(trim($search), 0, 100);
+    $query = 'SELECT m.title, c.code AS subject, m.file_path, m.created_at
+              FROM study_materials m
+              JOIN classes c ON c.id = m.class_id
+              JOIN class_enrollments ce ON ce.class_id = c.id AND ce.student_id = ?';
+    $parameters = [$user['id']];
+    if ($search !== '') {
+        $query .= ' WHERE (m.title LIKE ? OR m.description LIKE ? OR c.code LIKE ?)';
+        $term = '%' . $search . '%';
+        array_push($parameters, $term, $term, $term);
+    }
+    $query .= ' ORDER BY m.created_at DESC, m.title';
+    $stmt = Database::connect()->prepare($query);
+    $stmt->execute($parameters);
+    $materials = $stmt->fetchAll();
+
+    return array_map(static function (array $material): array {
+        return [
+            $material['title'],
+            $material['subject'],
+            ['href' => '../' . $material['file_path'], 'text' => 'Open resource'],
+            'Available',
+        ];
+    }, $materials);
 }
 
 function get_notifications(): array

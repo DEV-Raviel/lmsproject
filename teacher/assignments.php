@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/teacher_init.php';
 $pageTitle = 'Assignments';
 $activePage = 'assignments';
 $selectedClassId = teacher_selected_class_id($classes);
+$search = is_string($_GET['q'] ?? null) ? mb_substr(trim($_GET['q']), 0, 100) : '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     teacher_verify_csrf();
     $classId = filter_var($_POST['class_id'] ?? null, FILTER_VALIDATE_INT);
@@ -48,21 +49,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$query = 'SELECT a.title, a.instructions, a.file_path, a.deadline, a.points_possible, c.code
+          FROM assignments a JOIN classes c ON c.id = a.class_id
+          WHERE c.teacher_id = ?';
+$parameters = [$user['id']];
 if ($selectedClassId !== null) {
-    $stmt = $pdo->prepare(
-        'SELECT a.title, a.instructions, a.file_path, a.deadline, a.points_possible, c.code
-         FROM assignments a JOIN classes c ON c.id = a.class_id
-         WHERE c.teacher_id = ? AND c.id = ? ORDER BY a.deadline DESC'
-    );
-    $stmt->execute([$user['id'], $selectedClassId]);
-} else {
-    $stmt = $pdo->prepare(
-        'SELECT a.title, a.instructions, a.file_path, a.deadline, a.points_possible, c.code
-         FROM assignments a JOIN classes c ON c.id = a.class_id
-         WHERE c.teacher_id = ? ORDER BY a.deadline DESC'
-    );
-    $stmt->execute([$user['id']]);
+    $query .= ' AND c.id = ?';
+    $parameters[] = $selectedClassId;
 }
+if ($search !== '') {
+    $query .= ' AND (a.title LIKE ? OR a.instructions LIKE ? OR c.code LIKE ?)';
+    $term = '%' . $search . '%';
+    array_push($parameters, $term, $term, $term);
+}
+$query .= ' ORDER BY a.deadline DESC';
+$stmt = $pdo->prepare($query);
+$stmt->execute($parameters);
 $assignments = $stmt->fetchAll();
 $flash = $_SESSION['teacher_flash'] ?? null;
 unset($_SESSION['teacher_flash']);
@@ -78,6 +80,28 @@ include __DIR__ . '/../includes/sidebar.php';
         </div>
     </div>
     <?php if ($flash): ?><p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status"><?= e($flash['message']) ?></p><?php endif; ?>
+    <details class="filter-disclosure" <?= ($search !== '' || $selectedClassId !== null) ? 'open' : '' ?>>
+        <summary>Filters</summary>
+        <form class="list-filter-form" method="get">
+            <label>
+                <span>Search assignments</span>
+                <input type="search" name="q" value="<?= e($search) ?>" maxlength="100" placeholder="Title, instructions, or class">
+            </label>
+            <label>
+                <span>Class</span>
+                <select name="class_id">
+                    <option value="">All my classes</option>
+                    <?php foreach ($classes as $class): ?>
+                        <option value="<?= (int) $class['id'] ?>" <?= $selectedClassId === (int) $class['id'] ? 'selected' : '' ?>>
+                            <?= e($class['code'] . ' — ' . $class['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <button class="btn" type="submit">Apply filters</button>
+            <a class="btn btn-outline" href="assignments.php">Clear</a>
+        </form>
+    </details>
     <?php if ($classes): ?>
         <form class="card form" method="post" enctype="multipart/form-data">
             <?= csrf_field() ?>
@@ -114,7 +138,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 <td><?php if ($assignment['file_path']): ?><a href="<?= e('../' . $assignment['file_path']) ?>">Download</a><?php else: ?>—<?php endif; ?></td>
             </tr>
         <?php endforeach; ?>
-        <?php if (!$assignments): ?><tr><td colspan="5">No assignments created yet.</td></tr><?php endif; ?>
+        <?php if (!$assignments): ?><tr><td colspan="5"><?= $search !== '' || $selectedClassId !== null ? 'No assignments match these filters.' : 'No assignments created yet.' ?></td></tr><?php endif; ?>
         </tbody>
     </table></div>
 </main>

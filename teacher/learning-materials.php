@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/teacher_init.php';
 $pageTitle = 'Learning Materials';
 $activePage = 'materials';
 $selectedClassId = teacher_selected_class_id($classes);
+$search = is_string($_GET['q'] ?? null) ? mb_substr(trim($_GET['q']), 0, 100) : '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     teacher_verify_csrf();
     $classId = filter_var($_POST['class_id'] ?? null, FILTER_VALIDATE_INT);
@@ -35,21 +36,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$query = 'SELECT m.title, m.description, m.file_path, m.created_at, c.code
+          FROM study_materials m JOIN classes c ON c.id = m.class_id
+          WHERE c.teacher_id = ?';
+$parameters = [$user['id']];
 if ($selectedClassId !== null) {
-    $stmt = $pdo->prepare(
-        'SELECT m.title, m.description, m.file_path, m.created_at, c.code
-         FROM study_materials m JOIN classes c ON c.id = m.class_id
-         WHERE c.teacher_id = ? AND c.id = ? ORDER BY m.created_at DESC'
-    );
-    $stmt->execute([$user['id'], $selectedClassId]);
-} else {
-    $stmt = $pdo->prepare(
-        'SELECT m.title, m.description, m.file_path, m.created_at, c.code
-         FROM study_materials m JOIN classes c ON c.id = m.class_id
-         WHERE c.teacher_id = ? ORDER BY m.created_at DESC'
-    );
-    $stmt->execute([$user['id']]);
+    $query .= ' AND c.id = ?';
+    $parameters[] = $selectedClassId;
 }
+if ($search !== '') {
+    $query .= ' AND (m.title LIKE ? OR m.description LIKE ? OR c.code LIKE ?)';
+    $term = '%' . $search . '%';
+    array_push($parameters, $term, $term, $term);
+}
+$query .= ' ORDER BY m.created_at DESC';
+$stmt = $pdo->prepare($query);
+$stmt->execute($parameters);
 $materials = $stmt->fetchAll();
 $flash = $_SESSION['teacher_flash'] ?? null;
 unset($_SESSION['teacher_flash']);
@@ -59,6 +61,28 @@ include __DIR__ . '/../includes/sidebar.php';
 <main class="main-content">
     <div class="page-header"><h2>Learning Materials</h2><p>Share course resources with your assigned classes.</p></div>
     <?php if ($flash): ?><p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status"><?= e($flash['message']) ?></p><?php endif; ?>
+    <details class="filter-disclosure" <?= ($search !== '' || $selectedClassId !== null) ? 'open' : '' ?>>
+        <summary>Filters</summary>
+        <form class="list-filter-form" method="get">
+            <label>
+                <span>Search materials</span>
+                <input type="search" name="q" value="<?= e($search) ?>" maxlength="100" placeholder="Title, description, or class">
+            </label>
+            <label>
+                <span>Class</span>
+                <select name="class_id">
+                    <option value="">All my classes</option>
+                    <?php foreach ($classes as $class): ?>
+                        <option value="<?= (int) $class['id'] ?>" <?= $selectedClassId === (int) $class['id'] ? 'selected' : '' ?>>
+                            <?= e($class['code'] . ' — ' . $class['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <button class="btn" type="submit">Apply filters</button>
+            <a class="btn btn-outline" href="learning-materials.php">Clear</a>
+        </form>
+    </details>
     <?php if ($classes): ?>
         <form class="card form" method="post" enctype="multipart/form-data">
             <?= csrf_field() ?>
@@ -93,7 +117,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 <td><a href="<?= e('../' . $material['file_path']) ?>">Download</a></td>
             </tr>
         <?php endforeach; ?>
-        <?php if (!$materials): ?><tr><td colspan="5">No materials uploaded yet.</td></tr><?php endif; ?>
+        <?php if (!$materials): ?><tr><td colspan="5"><?= $search !== '' || $selectedClassId !== null ? 'No materials match these filters.' : 'No materials uploaded yet.' ?></td></tr><?php endif; ?>
         </tbody>
     </table></div>
 </main>
