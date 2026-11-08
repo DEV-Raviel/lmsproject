@@ -1,11 +1,13 @@
 <?php
 require_once __DIR__ . '/../includes/student_init.php';
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/announcements.php';
 
 $pageTitle  = 'Dashboard';
 $activePage = 'dashboard';
 
 $pdo = Database::connect();
+$schoolAnnouncements = get_school_announcements($pdo, 4);
 $enrolledClasses = get_classes();
 $counts = get_task_counts();
 $availableQuizzes = array_values(array_filter(
@@ -113,6 +115,22 @@ include __DIR__ . '/../includes/sidebar.php';
 
     <!-- Right Side: Bulletin Widget with Hide Option -->
     <div class="bulletin-column card dashboard-master-card">
+        <section class="school-announcements" aria-labelledby="school-announcements-title">
+            <h3 id="school-announcements-title">School Announcements</h3>
+            <?php if ($schoolAnnouncements): ?>
+                <?php foreach ($schoolAnnouncements as $announcement): ?>
+                    <article class="school-announcement-card">
+                        <h4><?= e($announcement['title']) ?></h4>
+                        <p><?= nl2br(e($announcement['body'])) ?></p>
+                        <time datetime="<?= e(date('c', strtotime($announcement['created_at']))) ?>">
+                            <?= e(date('M j, Y', strtotime($announcement['created_at']))) ?>
+                        </time>
+                    </article>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="empty">There are no school announcements right now.</p>
+            <?php endif; ?>
+        </section>
         <div class="bulletin-toggle-container">
             <button type="button" class="btn-toggle-bulletin" id="toggleBulletinBtn" onclick="toggleBulletin()">Hide Bulletin</button>
         </div>

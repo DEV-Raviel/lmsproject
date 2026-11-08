@@ -25,6 +25,11 @@ function require_login(): array
 
 function require_role(string $role): array
 {
+    return requireRole($role);
+}
+
+function requireRole(string $role): array
+{
     $user = require_login();
     if (($user['role'] ?? '') !== $role) {
         http_response_code(403);

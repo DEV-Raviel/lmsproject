@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/calendar.php';
 $pageTitle = 'Academic Calendar';
 $activePage = 'calendar';
 $events = get_role_calendar_events($pdo, calendar_scope_for_role($user['role']));
+$tasks = get_user_calendar_tasks($pdo, (int) $user['id']);
 $stmt = $pdo->prepare(
     "SELECT a.title, a.deadline, c.code, 'Assignment' AS activity_type
      FROM assignments a JOIN classes c ON c.id = a.class_id
@@ -37,12 +38,12 @@ include __DIR__ . '/../includes/sidebar.php';
     <div class="page-header">
         <p class="eyebrow">TEACHER TOOLS</p>
         <h2>Academic Calendar</h2>
-        <p>View assignment and quiz deadlines alongside events shared with teachers.</p>
+        <p>View class deadlines, events shared with teachers, and school-wide events.</p>
     </div>
     <?php if ($flash): ?>
-        <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status"><?= e($flash['message']) ?></p>
+        <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status" data-toast><?= e($flash['message']) ?></p>
     <?php endif; ?>
-    <?php render_calendar($events); ?>
+    <?php render_calendar($events, $tasks); ?>
     <h3 class="calendar-deadlines-heading">Class Deadlines</h3>
     <div class="table-responsive"><table class="data-table">
         <thead><tr><th>Date &amp; Time</th><th>Type</th><th>Activity / Deadline</th><th>Class</th><th>Status</th></tr></thead>

@@ -2,11 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/db.php';
 
-$user = require_login();
-if (!in_array($user['role'] ?? '', ['admin', 'dean'], true)) {
-    http_response_code(403);
-    exit('Access denied.');
-}
+$user = require_role('admin');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     exit('Method not allowed.');
@@ -103,6 +99,88 @@ try {
         $stmt->execute([$classId, $studentId]);
         $succeed($stmt->rowCount() ? 'Student enrolled successfully.' : 'That student is already enrolled in this class.');
     }
+
+    if ($action === 'batch_enroll_students') {
+        $classId = filter_var($_POST['class_id'] ?? null, FILTER_VALIDATE_INT);
+        $rawIdentifiers = is_string($_POST['student_identifiers'] ?? null)
+            ? trim($_POST['student_identifiers'])
+            : '';
+        if (!$classId || $rawIdentifiers === '') {
+            $fail('Select a class and provide student identifiers.');
+        }
+
+        $classStmt = $pdo->prepare('SELECT id FROM classes WHERE id = ?');
+        $classStmt->execute([$classId]);
+        if (!$classStmt->fetchColumn()) {
+            $fail('The selected class was not found.');
+        }
+
+        $identifiers = preg_split('/[\s,;]+/', $rawIdentifiers, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $identifiers = array_values(array_unique(array_map('trim', $identifiers)));
+        if (count($identifiers) > 200 || count($identifiers) === 0) {
+            $fail('Enter between 1 and 200 student identifiers.');
+        }
+        foreach ($identifiers as $identifier) {
+            if (mb_strlen($identifier) > 150) {
+                $fail('Each student identifier must be 150 characters or fewer.');
+            }
+        }
+
+        $placeholders = implode(',', array_fill(0, count($identifiers), '?'));
+        $lookup = $pdo->prepare(
+            "SELECT id, user_code, email
+             FROM users
+             WHERE role = 'student'
+               AND (user_code IN ($placeholders) OR email IN ($placeholders))"
+        );
+        $lookup->execute(array_merge($identifiers, $identifiers));
+        $matchedStudents = $lookup->fetchAll();
+        $matchedIdentifiers = [];
+        $studentIds = [];
+        foreach ($matchedStudents as $student) {
+            $studentIds[(int) $student['id']] = true;
+            $matchedIdentifiers[strtolower($student['user_code'])] = true;
+            $matchedIdentifiers[strtolower($student['email'])] = true;
+        }
+        $unknown = array_values(array_filter(
+            $identifiers,
+            static fn(string $identifier): bool => !isset($matchedIdentifiers[strtolower($identifier)])
+        ));
+
+        $insertEnrollment = $pdo->prepare(
+            'INSERT IGNORE INTO class_enrollments (class_id, student_id) VALUES (?, ?)'
+        );
+        $enrolled = 0;
+        try {
+            $pdo->beginTransaction();
+            foreach (array_keys($studentIds) as $studentId) {
+                $insertEnrollment->execute([$classId, $studentId]);
+                $enrolled += $insertEnrollment->rowCount();
+            }
+            $pdo->commit();
+        } catch (PDOException $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $exception;
+        }
+
+        $alreadyEnrolled = count($studentIds) - $enrolled;
+        $message = sprintf(
+            'Batch enrollment complete: %d enrolled, %d already enrolled, %d not found as students.',
+            $enrolled,
+            $alreadyEnrolled,
+            count($unknown)
+        );
+        if ($unknown) {
+            $message .= ' Not matched: ' . implode(', ', array_slice($unknown, 0, 10));
+            if (count($unknown) > 10) {
+                $message .= ', and ' . (count($unknown) - 10) . ' more';
+            }
+        }
+        $succeed($message);
+    }
+
     $fail('Unknown action.');
 } catch (PDOException $exception) {
     error_log('Admin action failed: ' . $exception->getMessage());

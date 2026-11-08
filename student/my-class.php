@@ -30,14 +30,11 @@ include __DIR__ . '/../includes/sidebar.php';
             <?php foreach ($classes as $c): ?>
                 <a href="class-details.php?id=<?= (int) $c['id'] ?>" class="class-card">
                     <div class="class-card-header">
+                        <span class="class-card-code">CLASS SECTION · <?= e($c['section']) ?></span>
                         <h3><?= e($c['subject']) ?></h3>
                     </div>
                     <div class="class-card-body">
                         <dl>
-                            <div class="class-card-field">
-                                <dt>Section</dt>
-                                <dd><?= e($c['section']) ?></dd>
-                            </div>
                             <div class="class-card-field">
                                 <dt>Instructor</dt>
                                 <dd><?= e($c['teacher']) ?></dd>

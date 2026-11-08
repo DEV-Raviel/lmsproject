@@ -4,8 +4,14 @@ $pageTitle = $pageTitle ?? 'Dashboard';
 $basePath  = $basePath ?? '../';
 $user      = $user ?? current_user();
 $avatarInitial = strtoupper(substr((string) ($user['name'] ?? 'U'), 0, 1));
+$profileLabel = match ($user['role'] ?? '') {
+    'admin' => 'User Management',
+    'dean' => 'Announcements',
+    default => 'My Profile',
+};
 $profileHref = match ($user['role'] ?? '') {
-    'admin', 'dean' => $basePath . 'admin/dashboard.php',
+    'admin' => $basePath . 'admin/dashboard.php',
+    'dean' => $basePath . 'admin/manage_announcements.php',
     'teacher' => $basePath . 'teacher/teacher-profile.php',
     default => $basePath . 'student/account.php',
 };
@@ -20,6 +26,7 @@ $profileHref = match ($user['role'] ?? '') {
 </head>
 <body>
 
+<a class="skip-link" href="#main-content">Skip to main content</a>
 <header class="topbar">
     <div class="brand-area">
         <h1>e-GURO</h1>
@@ -33,7 +40,7 @@ $profileHref = match ($user['role'] ?? '') {
                 <span><?= e($user['name'] ?? 'User') ?></span>
             </summary>
             <ul>
-                <li><a href="<?= e($profileHref) ?>">My Profile</a></li>
+                <li><a href="<?= e($profileHref) ?>"><?= e($profileLabel) ?></a></li>
                 <?php if (($user['role'] ?? '') === 'student'): ?>
                     <li><a href="<?= e($basePath) ?>student/notifications.php">Notifications</a></li>
                 <?php endif; ?>

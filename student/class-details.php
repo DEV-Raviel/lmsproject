@@ -60,7 +60,8 @@ include __DIR__ . '/../includes/sidebar.php';
     <nav class="tab-nav" aria-label="Class sections">
         <?php foreach ($tabs as $key => $label): ?>
             <a href="class-details.php?id=<?= $classId ?>&tab=<?= $key ?>"
-               class="tab-link <?= $key === $activeTab ? 'active' : '' ?>">
+               class="tab-link <?= $key === $activeTab ? 'active' : '' ?>"
+               <?= $key === $activeTab ? 'aria-current="page"' : '' ?>>
                 <?= e($label) ?>
             </a>
         <?php endforeach; ?>

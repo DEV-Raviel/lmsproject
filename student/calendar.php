@@ -6,6 +6,7 @@ $pageTitle  = 'Calendar';
 $activePage = 'calendar';
 $pdo = Database::connect();
 $events = get_role_calendar_events($pdo, calendar_scope_for_role($user['role']));
+$tasks = get_user_calendar_tasks($pdo, (int) $user['id']);
 $stmt = $pdo->prepare(
     "SELECT a.title, a.deadline AS event_date, c.code AS detail, 'assignment' AS source
      FROM assignments a
@@ -40,11 +41,11 @@ include __DIR__ . '/../includes/sidebar.php';
     <div class="page-header">
         <p class="eyebrow">YOUR LEARNING SPACE</p>
         <h2>Calendar of Events</h2>
-        <p>View your class deadlines and events shared with students.</p>
+        <p>View class deadlines, events shared with students, and school-wide events.</p>
     </div>
     <?php if ($flash): ?>
-        <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status"><?= e($flash['message']) ?></p>
+        <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status" data-toast><?= e($flash['message']) ?></p>
     <?php endif; ?>
-    <?php render_calendar($events); ?>
+    <?php render_calendar($events, $tasks); ?>
 </main>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

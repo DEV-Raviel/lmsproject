@@ -3,14 +3,10 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../config/db.php';
 
-$user = require_login();
-if (!in_array($user['role'] ?? '', ['admin', 'dean'], true)) {
-    http_response_code(403);
-    exit('Access denied.');
-}
+$user = require_role('admin');
 $basePath = '../';
 $pageTitle = 'Administrator Console';
-$activePage = 'dashboard';
+$activePage = 'accounts';
 $pdo = Database::connect();
 $flash = $_SESSION['admin_flash'] ?? null;
 unset($_SESSION['admin_flash']);
@@ -57,7 +53,7 @@ include __DIR__ . '/../includes/sidebar.php';
     </div>
 
     <?php if ($flash): ?>
-        <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status"><?= e($flash['message']) ?></p>
+        <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status" data-toast><?= e($flash['message']) ?></p>
     <?php endif; ?>
 
     <section class="progress-grid" aria-label="System totals">
@@ -200,6 +196,20 @@ include __DIR__ . '/../includes/sidebar.php';
                                     </select>
                                     <button class="btn btn-sm" type="submit">Enroll</button>
                                 </form>
+                                <details class="batch-enrollment">
+                                    <summary>Enroll multiple students</summary>
+                                    <form method="post" action="../actions/admin_actions.php">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="batch_enroll_students">
+                                        <input type="hidden" name="class_id" value="<?= (int) $class['id'] ?>">
+                                        <label class="field">
+                                            <span>Student user codes or emails</span>
+                                            <textarea name="student_identifiers" rows="3" maxlength="30000" placeholder="One per line, or comma-separated" required></textarea>
+                                        </label>
+                                        <small>Paste up to 200 student identifiers. Existing enrollments are skipped.</small>
+                                        <button class="btn btn-outline btn-sm" type="submit">Enroll students</button>
+                                    </form>
+                                </details>
                             <?php else: ?><span>Create a student account first.</span><?php endif; ?>
                             <form method="post" action="../actions/admin_actions.php">
                                 <?= csrf_field() ?>

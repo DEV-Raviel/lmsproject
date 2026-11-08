@@ -60,11 +60,22 @@ application available outside a trusted local development environment.
 
 USER ROLES AND COMMON WORKFLOWS
 -------------------------------
-Administrator / Dean
-  - Sign in to open the administration dashboard.
-  - Manage user accounts and classes.
-  - Enroll students into classes.
-  - Use School Calendar to manage events shared with administrators and the dean.
+Administrator
+  - Use User Management to create and manage accounts, classes, and enrollments.
+  - Enroll multiple students into a class by pasting up to 200 student user
+    codes or email addresses into the class enrollment panel. Duplicate
+    enrollments are skipped and unmatched entries are reported.
+  - Use Account Recovery to create a one-time password reset link for another
+    account. Links expire after 30 minutes, can be used only once, and require
+    a new password of at least 12 characters.
+
+Dean
+  - Manage school announcements; published updates appear on teacher and
+    student dashboards, while drafts remain private to the Dean.
+  - Use School Events to create global events visible to every role. Teachers
+    and students can view these events but cannot edit them.
+  - Add private personal tasks to the Dean calendar; due dates appear alongside
+    school events, and tasks can be edited, completed, reopened, or deleted.
 
 Teacher
   - Open the dashboard to review assigned classes and activity.
@@ -73,8 +84,10 @@ Teacher
     class active in the related teacher tools.
   - Use Students to view students enrolled in one class or across all assigned
     classes.
-  - Use Academic Calendar to view class deadlines and manage events shared with
-    other teachers.
+  - Use Academic Calendar to view class deadlines, teacher-only events, and
+    school-wide events. School-wide events are read-only.
+  - Add private personal tasks on the calendar to track teaching work. Due
+    dates appear alongside class deadlines and can be edited or completed.
   - Expand the event count on a busy calendar day to view the remaining events.
   - Use Assignments to create class work with instructions, deadlines, and an
     optional attachment.
@@ -85,8 +98,11 @@ Teacher
 
 Student
   - Open My Classes to view enrolled classes and class details.
-  - Use Calendar to review class assignment and quiz deadlines and manage
-    events shared with other students.
+  - Use Calendar to review class assignment and quiz deadlines, student-only
+    events, and read-only school-wide events.
+  - Add private study or reminder tasks from the calendar and track them by
+    due date alongside class deadlines.
+  - Review published school announcements on the dashboard.
   - Open Lessons to download materials shared by a teacher.
   - Use To Do, Tasks, and Quizzes to review upcoming or due work.
   - Submit assignment files before the deadline.
@@ -96,8 +112,9 @@ Student
 
 Teacher and student pages share the same overall visual style, but the
 available data, actions, and dashboard labels depend on the signed-in role.
-Unauthenticated users must sign in; access to pages for a different role is
-denied.
+Unauthenticated users must sign in. Dean pages require the Dean role and
+Administrator pages require the Administrator role; neither role can open the
+other role's protected tools.
 
 DATABASE AND MIGRATIONS
 -----------------------
@@ -108,12 +125,26 @@ The files in database/migrations are for upgrading an existing database:
   1. database/migrations/2026_11_create_quizzes.sql
   2. database/migrations/2026_11_quiz_attempt_timing.sql
   3. database/migrations/2026_11_create_calendar_events.sql
+  4. database/migrations/2026_11_dean_announcements_and_account_recovery.sql
+  5. database/migrations/2026_11_personal_calendar_tasks.sql
 
 Apply the quiz table migration first, then the timing migration. The timing
 migration alters quiz_attempts and is not intended to be run repeatedly. Apply
-the calendar events migration to enable persistent role-specific events. Back
-up the database before applying migrations, and verify that the target database
-has not already received each change.
+the calendar events migration to enable persistent role-specific events. The
+Dean and recovery migration converts existing Admin/Dean calendar events to
+school-wide events and creates announcement and one-time reset-token tables.
+Apply it once after the calendar events migration. Back up the database before
+applying migrations, and verify that the target database has not already
+received each change.
+Apply the personal calendar tasks migration once after the Dean/recovery
+migration to enable private role-calendar task lists.
+
+ACCESSIBILITY AND NOTIFICATIONS
+-------------------------------
+Authenticated pages include a skip-to-content link, keyboard focus indicators,
+current-page navigation state, and shared accessible toast notifications for
+status and error messages. Notifications remain readable inline if JavaScript
+is unavailable. On narrow screens, class tabs can be scrolled horizontally.
 
 FILE UPLOADS
 ------------
@@ -143,10 +174,14 @@ IMPORTANT SECURITY AND DEPLOYMENT NOTES
 PROJECT GUIDE
 -------------
 index.php                         Sign-in page
-admin/dashboard.php               Administration pages
+admin/dashboard.php               Administrator user and class management
+admin/manage_announcements.php    Dean announcement management
+admin/calendar.php                Dean school events calendar
+admin/recover_accounts.php        Administrator account recovery
+reset-password.php                One-time password reset form
 teacher/                          Teacher dashboards and tools
 student/                          Student dashboards and learning pages
-actions/                          Login, administration, and submission handlers
+actions/                          Login, role tools, and submission handlers
 includes/                         Authentication, navigation, and shared helpers
 assets/css/                       Application styles
 assets/js/                        Dashboard, quiz, and upload interactions
@@ -176,6 +211,21 @@ Quiz tables are missing
   - For a new database, import database/schema.sql.
   - For an existing database without quiz tables, back it up and apply the two
     migration scripts in the order listed in DATABASE AND MIGRATIONS.
+
+Announcements or account recovery are unavailable
+  - For a new database, import the updated database/schema.sql.
+  - For an existing database, back it up and apply
+    database/migrations/2026_11_dean_announcements_and_account_recovery.sql
+    after the calendar events migration.
+  - Account recovery links are shown to an Administrator only once and expire
+    after 30 minutes; copy the link and share it directly with the account
+    owner.
+
+Personal calendar tasks are unavailable
+  - For a new database, import the updated database/schema.sql.
+  - For an existing database, back it up and apply
+    database/migrations/2026_11_personal_calendar_tasks.sql after the Dean and
+    account recovery migration.
 
 Teacher has no classes or a student sees no class work
   - Confirm the teacher is assigned to the class in the classes table.

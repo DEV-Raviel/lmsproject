@@ -5,9 +5,14 @@ require_once __DIR__ . '/../includes/calendar.php';
 require_once __DIR__ . '/../config/db.php';
 
 $user = require_login();
+$role = (string) ($user['role'] ?? '');
+if (!in_array($role, ['dean', 'teacher', 'student'], true)) {
+    http_response_code(403);
+    exit('Access denied.');
+}
 $scope = calendar_scope_for_role((string) ($user['role'] ?? ''));
 $calendarPage = match ($scope) {
-    'admin' => '../admin/calendar.php',
+    'school' => '../admin/calendar.php',
     'teacher' => '../teacher/calendar.php',
     'student' => '../student/calendar.php',
 };

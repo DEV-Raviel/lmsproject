@@ -138,10 +138,10 @@ CREATE TABLE IF NOT EXISTS `quiz_answers` (
     FOREIGN KEY (`question_id`) REFERENCES `quiz_questions`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 8. Role-specific calendar events
+-- 8. School-wide and role-specific calendar events
 CREATE TABLE IF NOT EXISTS `calendar_events` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `role_scope` ENUM('admin', 'teacher', 'student') NOT NULL,
+    `role_scope` ENUM('school', 'teacher', 'student') NOT NULL,
     `title` VARCHAR(160) NOT NULL,
     `description` TEXT NULL,
     `event_date` DATE NOT NULL,
@@ -150,6 +150,45 @@ CREATE TABLE IF NOT EXISTS `calendar_events` (
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX `idx_calendar_events_scope_date` (`role_scope`, `event_date`),
     FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 9. Personal tasks shown on each user's role calendar
+CREATE TABLE IF NOT EXISTS `user_tasks` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `title` VARCHAR(160) NOT NULL,
+    `description` TEXT NULL,
+    `due_date` DATE NOT NULL,
+    `is_complete` TINYINT(1) NOT NULL DEFAULT 0,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_user_tasks_owner_date` (`user_id`, `due_date`, `is_complete`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 10. Dean-managed school announcements
+CREATE TABLE IF NOT EXISTS `announcements` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `title` VARCHAR(200) NOT NULL,
+    `body` TEXT NOT NULL,
+    `is_published` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_by` INT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_announcements_published_created` (`is_published`, `created_at`),
+    FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- 11. One-time password recovery links
+CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `token_hash` CHAR(64) NOT NULL UNIQUE,
+    `expires_at` DATETIME NOT NULL,
+    `used_at` DATETIME NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX `idx_password_reset_user_expiry` (`user_id`, `expires_at`, `used_at`),
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- Seed Default Accounts (Default password for all demo accounts is 'password123')

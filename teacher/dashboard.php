@@ -1,8 +1,10 @@
 <?php
 require_once __DIR__ . '/../includes/teacher_init.php';
+require_once __DIR__ . '/../includes/announcements.php';
 
 $pageTitle = 'Teacher Dashboard';
 $activePage = 'dashboard';
+$schoolAnnouncements = get_school_announcements($pdo, 4);
 $classIds = array_column($classes, 'id');
 $studentCount = 0;
 $assignmentCount = 0;
@@ -96,6 +98,22 @@ include __DIR__ . '/../includes/sidebar.php';
         </div>
     </main>
     <aside class="bulletin-column card dashboard-master-card">
+        <section class="school-announcements" aria-labelledby="school-announcements-title">
+            <h3 id="school-announcements-title">School Announcements</h3>
+            <?php if ($schoolAnnouncements): ?>
+                <?php foreach ($schoolAnnouncements as $announcement): ?>
+                    <article class="school-announcement-card">
+                        <h4><?= e($announcement['title']) ?></h4>
+                        <p><?= nl2br(e($announcement['body'])) ?></p>
+                        <time datetime="<?= e(date('c', strtotime($announcement['created_at']))) ?>">
+                            <?= e(date('M j, Y', strtotime($announcement['created_at']))) ?>
+                        </time>
+                    </article>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="empty">There are no school announcements right now.</p>
+            <?php endif; ?>
+        </section>
         <h3>Upcoming Deadlines</h3>
         <?php if ($upcoming): ?>
             <?php foreach ($upcoming as $item): ?>

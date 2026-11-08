@@ -11,11 +11,15 @@ $activeTab    = $activeTab ?? null;
 // Role-based Nav Structure
 $menus = [
     'admin' => [
-        'Main Navigation' => [
-            'dashboard' => ['Dashboard Overview', $basePath . 'admin/dashboard.php'],
-            'calendar'  => ['School Calendar',   $basePath . 'admin/calendar.php'],
-            'accounts'  => ['User Accounts',     $basePath . 'admin/dashboard.php#accounts'],
-            'classes'   => ['Class Management',  $basePath . 'admin/dashboard.php#classes'],
+        'Account Administration' => [
+            'accounts' => ['User Management', $basePath . 'admin/dashboard.php'],
+            'recovery' => ['Account Recovery', $basePath . 'admin/recover_accounts.php'],
+        ]
+    ],
+    'dean' => [
+        'School Communications' => [
+            'announcements' => ['Announcements', $basePath . 'admin/manage_announcements.php'],
+            'calendar' => ['School Events', $basePath . 'admin/calendar.php'],
         ]
     ],
     'teacher' => [
@@ -48,9 +52,9 @@ $menus = [
     ]
 ];
 
-$currentMenu = $menus[$role === 'dean' ? 'admin' : $role] ?? $menus['student'];
+$currentMenu = $menus[$role] ?? $menus['student'];
 ?>
-<nav class="sidebar">
+<nav class="sidebar" aria-label="<?= e(ucfirst($role)) ?> navigation">
     <div class="sidebar-profile">
         <span class="user-avatar user-avatar-large" aria-hidden="true"><?= e($avatarInitial) ?></span>
         <h3><?= e($user['name'] ?? 'User Name') ?></h3>
@@ -81,7 +85,8 @@ $currentMenu = $menus[$role === 'dean' ? 'admin' : $role] ?? $menus['student'];
             ?>
                 <li>
                     <a href="class-details.php?id=<?= (int) $classContext['id'] ?>&tab=<?= $tabKey ?>"
-                       class="<?= ($activeTab ?? ($_GET['tab'] ?? 'overview')) === $tabKey ? 'active' : '' ?>">
+                       class="<?= ($activeTab ?? ($_GET['tab'] ?? 'overview')) === $tabKey ? 'active' : '' ?>"
+                       <?= ($activeTab ?? ($_GET['tab'] ?? 'overview')) === $tabKey ? 'aria-current="page"' : '' ?>>
                         <span><?= e($tabLabel) ?></span>
                     </a>
                 </li>
@@ -102,7 +107,8 @@ $currentMenu = $menus[$role === 'dean' ? 'admin' : $role] ?? $menus['student'];
             <ul>
                 <?php foreach ($items as $key => [$label, $href]): ?>
                     <li>
-                        <a href="<?= e($href) ?>" class="<?= $key === $activePage ? 'active' : '' ?>">
+                        <a href="<?= e($href) ?>" class="<?= $key === $activePage ? 'active' : '' ?>"
+                           <?= $key === $activePage ? 'aria-current="page"' : '' ?>>
                             <span><?= e($label) ?></span>
                         </a>
                     </li>

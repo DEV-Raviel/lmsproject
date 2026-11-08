@@ -35,7 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     match ($user['role']) {
-        'admin', 'dean' => header('Location: ../admin/dashboard.php'),
+        'admin' => header('Location: ../admin/dashboard.php'),
+        'dean' => header('Location: ../admin/manage_announcements.php'),
         'teacher' => header('Location: ../teacher/dashboard.php'),
         'student' => header('Location: ../student/dashboard.php'),
         default => header('Location: ../index.php'),

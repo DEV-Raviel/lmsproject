@@ -5,7 +5,8 @@ session_start();
 if (!empty($_SESSION['user'])) {
     $role = $_SESSION['user']['role'] ?? '';
     match ($role) {
-        'admin', 'dean' => header('Location: admin/dashboard.php'),
+        'admin' => header('Location: admin/dashboard.php'),
+        'dean' => header('Location: admin/manage_announcements.php'),
         'teacher' => header('Location: teacher/dashboard.php'),
         'student' => header('Location: student/dashboard.php'),
         default => null,
