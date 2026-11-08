@@ -22,6 +22,14 @@ final class SharedFunctionsTest extends TestCase
         self::assertFalse(is_valid_new_password(str_repeat('a', 201)));
     }
 
+    public function testGeneratedTemporaryPasswordsAreSixteenCharacters(): void
+    {
+        $password = generate_temporary_password();
+
+        self::assertSame(16, strlen($password));
+        self::assertSame(1, preg_match('/\A[A-Za-z2-9!@#$%]{16}\z/', $password));
+    }
+
     public function testFacebookProfileLinksRequireAnHttpsFacebookUrl(): void
     {
         self::assertTrue(is_valid_facebook_url('https://www.facebook.com/example.teacher'));

@@ -83,7 +83,7 @@ include __DIR__ . '/../includes/sidebar.php';
         <?php if (!empty($flash['temporary_password'])): ?>
             <section class="recovery-link-card" aria-labelledby="new-account-password-title">
                 <h3 id="new-account-password-title">Copy this temporary password now</h3>
-                <p>It is shown once. Share it securely; the new user must change it at first sign-in.</p>
+                <p>It is shown once. Share it securely; the new user must change it at first sign-in. Temporary passwords are 16 characters.</p>
                 <label class="field">
                     <span>Temporary password</span>
                     <input type="text" readonly value="<?= e($flash['temporary_password']) ?>" onclick="this.select()">

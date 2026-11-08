@@ -33,7 +33,7 @@ if (!$accountId || $accountId < 1 || $accountId === (int) $user['id']) {
 
 $pdo = Database::connect();
 try {
-    $temporaryPassword = bin2hex(random_bytes(16));
+    $temporaryPassword = generate_temporary_password();
     $pdo->beginTransaction();
     $accountStmt = $pdo->prepare('SELECT full_name FROM users WHERE id = ? FOR UPDATE');
     $accountStmt->execute([$accountId]);

@@ -26,7 +26,7 @@ include __DIR__ . '/../includes/sidebar.php';
     <div class="page-header">
         <p class="eyebrow">ACCOUNT ADMINISTRATION</p>
         <h2>Account Recovery</h2>
-        <p>Generate a one-time temporary password. The account must change it at next sign-in.</p>
+        <p>Generate a one-time 16-character temporary password. The account must change it at next sign-in.</p>
     </div>
     <?php if ($flash): ?>
         <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status"><?= e($flash['message']) ?></p>

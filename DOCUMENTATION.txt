@@ -78,14 +78,14 @@ Administrator
   - Use Filters to search accounts by name, code, email, or role and classes by
     code, subject, teacher, semester, or academic year.
   - Search the Student Profiles list by student name, user code, or email.
-  - New accounts receive a random temporary password shown to the Administrator
-    once. The user must change it before opening any role pages.
+  - New accounts receive a random 16-character temporary password shown to the
+    Administrator once. The user must change it before opening any role pages.
   - Enroll multiple students into a class by pasting up to 200 student user
     codes or email addresses into the class enrollment panel. Duplicate
     enrollments are skipped and unmatched entries are reported.
-  - Use Account Recovery to assign a random temporary password to another
-    account. It is shown once to the Administrator; the user must change it
-    before accessing the LMS.
+  - Use Account Recovery to assign a random 16-character temporary password
+    to another account. It is shown once to the Administrator; the user must
+    change it before accessing the LMS.
 
 Dean
   - Manage school announcements; published updates appear on teacher and

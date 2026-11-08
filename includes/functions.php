@@ -13,6 +13,18 @@ function is_valid_new_password(string $password): bool
     return $length >= 12 && $length <= 200;
 }
 
+function generate_temporary_password(): string
+{
+    $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+    $password = '';
+    $lastIndex = strlen($characters) - 1;
+    for ($index = 0; $index < 16; $index++) {
+        $password .= $characters[random_int(0, $lastIndex)];
+    }
+
+    return $password;
+}
+
 function is_valid_facebook_url(string $url): bool
 {
     $parts = parse_url($url);

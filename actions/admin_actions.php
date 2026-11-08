@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../config/db.php';
 
 $user = require_role('admin');
@@ -43,7 +44,7 @@ try {
             || !in_array($role, ['admin', 'dean', 'teacher', 'student'], true)) {
             $fail('Enter a valid user code, name, email, and role.');
         }
-        $temporaryPassword = bin2hex(random_bytes(16));
+        $temporaryPassword = generate_temporary_password();
         $stmt = $pdo->prepare(
             'INSERT INTO users (user_code, full_name, email, password, role, must_change_password)
              VALUES (?, ?, ?, ?, ?, 1)'
