@@ -3,16 +3,10 @@ require_once __DIR__ . '/../includes/student_init.php';
 
 $pageTitle  = 'My Account';
 $activePage = '';
+$pdo = Database::connect();
 
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
+include __DIR__ . '/../includes/my_account.php';
 ?>
-<main class="main-content">
-    <h2>My Account</h2>
-    <?php render_details([
-        'Name'       => $user['name'] ?? '',
-        'Student ID' => $user['student_id'] ?? '',
-        'Role'       => ucfirst($user['role'] ?? ''),
-    ]); ?>
-</main>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

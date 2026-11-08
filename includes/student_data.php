@@ -144,7 +144,10 @@ function get_classes(): array
     }
     $pdo = Database::connect();
     $stmt = $pdo->prepare(
-        'SELECT c.id, c.code AS section, c.name AS subject, u.full_name AS teacher
+        'SELECT c.id, c.code AS section, c.name AS subject, c.teacher_id,
+                u.full_name AS teacher, u.email AS teacher_email,
+                u.facebook_url AS teacher_facebook_url,
+                u.profile_photo_path AS teacher_photo
          FROM class_enrollments ce
          JOIN classes c ON c.id = ce.class_id
          LEFT JOIN users u ON u.id = c.teacher_id
@@ -163,7 +166,10 @@ function get_class_by_id(int $id): ?array
     }
     $pdo = Database::connect();
     $stmt = $pdo->prepare(
-        'SELECT c.id, c.code AS section, c.name AS subject, u.full_name AS teacher
+        'SELECT c.id, c.code AS section, c.name AS subject, c.teacher_id,
+                u.full_name AS teacher, u.email AS teacher_email,
+                u.facebook_url AS teacher_facebook_url,
+                u.profile_photo_path AS teacher_photo
          FROM class_enrollments ce
          JOIN classes c ON c.id = ce.class_id
          LEFT JOIN users u ON u.id = c.teacher_id
@@ -297,7 +303,8 @@ function get_class_colleagues(int $classId): array
     }
     $pdo = Database::connect();
     $stmt = $pdo->prepare(
-        "SELECT u.full_name AS name, u.user_code AS student_id, u.email
+        "SELECT u.id, u.full_name AS name, u.user_code AS student_id, u.email,
+                u.facebook_url, u.profile_photo_path
          FROM class_enrollments ce
          JOIN class_enrollments viewer ON viewer.class_id = ce.class_id AND viewer.student_id = ?
          JOIN users u ON u.id = ce.student_id AND u.role = 'student'

@@ -14,6 +14,7 @@ REQUIREMENTS
 - MySQL 5.7+ or MariaDB 10.3+
 - PHP PDO and the PDO MySQL driver (pdo_mysql)
 - PHP Fileinfo extension for validating uploaded files
+- PHP GD extension for safely cropping and normalizing profile photos
 - A modern web browser
 
 No Composer or npm packages are required to run the application.
@@ -143,6 +144,15 @@ available data, actions, and dashboard labels depend on the signed-in role.
 Unauthenticated users must sign in. Dean pages require the Dean role and
 Administrator pages require the Administrator role; neither role can open the
 other role's protected tools.
+  - All roles can update their password from My Account after confirming their
+    current password. Administrators supply each account's institutional email
+    at creation; teachers cannot change that email in their profile.
+  - Teachers must add a valid Facebook profile link in My Profile. Students
+    enrolled in a teacher's class can open that instructor's profile to view
+    the admin-provided email and Facebook contact link.
+  - Students can add a square profile photo and an optional Facebook link in My
+    Account. Only students who share a class can view a classmate's contact card.
+    Teacher photos and contact cards are available to their enrolled students.
 
 Navigation
   - On screens 1024 pixels wide or narrower, use Menu to open the role-specific
@@ -167,6 +177,8 @@ The files in database/migrations are for upgrading an existing database:
   7. database/migrations/2026_11_personal_calendar_tasks.sql
   8. database/migrations/2026_11_student_profiles.sql
   9. database/migrations/2026_11_assignment_grading.sql
+  10. database/migrations/2026_11_teacher_facebook_contact.sql
+  11. database/migrations/2026_11_user_profile_photo.sql
 
 Apply the auth-security migration to existing installations before using the
 login throttling feature. Login attempts are limited per normalized account
@@ -185,6 +197,11 @@ Back up the database before applying migrations and verify that each target
 change has not already been applied.
 The assignment-grading migration adds the points-possible field used by the
 teacher Gradebook and must be applied before creating or grading assignments.
+Apply the teacher Facebook contact migration to add the optional contact-link
+column; teachers are required to provide a valid Facebook profile link in My
+Profile before it is shown to students. Apply the profile-photo migration after the teacher contact migration to add the
+optional generated square portrait path for teachers and students. Uploaded
+photos are normalized JPEGs served only to the account owner or their class.
 Administrator deletion is blocked when an account or class is linked to graded
 student work; those records cannot be deleted without removing academic history.
 
@@ -238,6 +255,8 @@ Teacher assignment attachments and learning materials, and student assignment
 submissions, are saved under uploads/. The application limits uploads to 10 MB
 and checks the file extension and detected MIME type. Supported formats include
 PDF, Office documents, images (PNG/JPG), and ZIP files.
+Teacher and student profile photos accept JPG or PNG up to 5 MB; they are
+validated, center-cropped, and re-encoded as square JPEGs before storage.
 
 The Apache/PHP process must be able to create and write files in the relevant
 uploads subdirectories. Grant write access to the web-server account for only

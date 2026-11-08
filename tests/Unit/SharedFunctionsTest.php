@@ -14,6 +14,38 @@ final class SharedFunctionsTest extends TestCase
         self::assertSame('&lt;script&gt;&quot;&amp;&#039;', e('<script>"&\''));
     }
 
+    public function testFacebookProfileLinksRequireAnHttpsFacebookUrl(): void
+    {
+        self::assertTrue(is_valid_facebook_url('https://www.facebook.com/example.teacher'));
+        self::assertTrue(is_valid_facebook_url('https://m.facebook.com/profile.php?id=123'));
+        self::assertTrue(is_valid_facebook_url('https://fb.com/example.teacher'));
+        self::assertFalse(is_valid_facebook_url('http://facebook.com/example.teacher'));
+        self::assertFalse(is_valid_facebook_url('https://facebook.com.evil.example/profile'));
+        self::assertFalse(is_valid_facebook_url('https://example.com/facebook.com'));
+        self::assertFalse(is_valid_facebook_url('https://facebook.com/'));
+    }
+
+    public function testProfilePhotoPathsOnlyAllowGeneratedJpegNames(): void
+    {
+        self::assertSame(
+            '../student/profile-photo.php?id=16&class_id=4',
+            profile_photo_src(
+                'uploads/profile_photos/0123456789abcdef0123456789abcdef.jpg',
+                16,
+                '../',
+                4
+            )
+        );
+        self::assertSame(
+            '../student/profile-photo.php?id=16',
+            profile_photo_src('uploads/profile_photos/0123456789abcdef0123456789abcdef.jpg', 16, '../')
+        );
+        self::assertNull(profile_photo_src('../config/db.php', 16, '../'));
+        self::assertNull(profile_photo_src('uploads/profile_photos/profile.php', 16, '../'));
+        self::assertNull(profile_photo_src(null, 16, '../'));
+        self::assertNull(profile_photo_src('uploads/profile_photos/0123456789abcdef0123456789abcdef.jpg', 0, '../'));
+    }
+
     public function testCsrfTokenValidationRequiresTheSessionToken(): void
     {
         $token = csrf_token();

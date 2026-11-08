@@ -125,8 +125,9 @@ include __DIR__ . '/../includes/sidebar.php';
                     <input id="full-name" name="full_name" required maxlength="150">
                 </div>
                 <div class="field">
-                    <label for="email">Institutional email</label>
+                    <label for="email">Institutional email (provided by the Administrator)</label>
                     <input id="email" name="email" type="email" required maxlength="150">
+                    <small>This email will be used as the teacher's student-facing contact email.</small>
                 </div>
                 <div class="field">
                     <label for="role">Role</label>

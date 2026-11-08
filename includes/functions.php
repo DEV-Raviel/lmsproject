@@ -7,6 +7,62 @@ function e($value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function is_valid_facebook_url(string $url): bool
+{
+    $parts = parse_url($url);
+    if (!is_array($parts)
+        || strtolower($parts['scheme'] ?? '') !== 'https'
+        || empty($parts['host'])
+        || !isset($parts['path'])
+        || trim($parts['path'], '/') === ''
+        || isset($parts['user'])
+        || isset($parts['pass'])
+        || (isset($parts['port']) && $parts['port'] !== 443)) {
+        return false;
+    }
+
+    $host = strtolower(rtrim($parts['host'], '.'));
+    return $host === 'facebook.com'
+        || $host === 'fb.com'
+        || str_ends_with($host, '.facebook.com');
+}
+
+function profile_photo_src(
+    ?string $path,
+    int $userId,
+    string $basePath = '',
+    ?int $classId = null
+): ?string
+{
+    if (!is_valid_profile_photo_path($path) || $userId < 1) {
+        return null;
+    }
+
+    $query = ['id' => $userId];
+    if ($classId !== null && $classId > 0) {
+        $query['class_id'] = $classId;
+    }
+
+    return $basePath . 'student/profile-photo.php?' . http_build_query($query);
+}
+
+function is_valid_profile_photo_path(?string $path): bool
+{
+    return $path !== null
+        && preg_match('#\Auploads/profile_photos/[a-f0-9]{32}\.jpg\z#', $path) === 1;
+}
+
+function profile_initials(string $name): string
+{
+    $words = preg_split('/\s+/u', trim($name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    $initials = '';
+    foreach (array_slice($words, 0, 2) as $word) {
+        $initials .= mb_strtoupper(mb_substr($word, 0, 1));
+    }
+
+    return $initials !== '' ? $initials : 'U';
+}
+
 /** "9 days ago", "3 months ago" ... */
 function time_ago(string $datetime): string
 {

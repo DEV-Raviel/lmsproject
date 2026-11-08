@@ -28,5 +28,16 @@ final class DatabaseIsolationTest extends TestCase
         foreach ($requiredTables as $table) {
             self::assertContains($table, $tables);
         }
+
+        $contactColumn = $pdo->query(
+            "SELECT column_name FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'facebook_url'"
+        )->fetchColumn();
+        self::assertSame('facebook_url', $contactColumn);
+        $photoColumn = $pdo->query(
+            "SELECT column_name FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'profile_photo_path'"
+        )->fetchColumn();
+        self::assertSame('profile_photo_path', $photoColumn);
     }
 }

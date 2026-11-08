@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `user_code` VARCHAR(50) NOT NULL UNIQUE,
     `full_name` VARCHAR(150) NOT NULL,
     `email` VARCHAR(150) NOT NULL UNIQUE,
+    `facebook_url` VARCHAR(255) NULL,
+    `profile_photo_path` VARCHAR(255) NULL,
     `password` VARCHAR(255) NOT NULL,
     `must_change_password` TINYINT(1) NOT NULL DEFAULT 0,
     `role` ENUM('admin', 'dean', 'teacher', 'student') NOT NULL,

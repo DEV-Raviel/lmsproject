@@ -51,7 +51,14 @@ include __DIR__ . '/../includes/sidebar.php';
     <div class="class-header">
         <div class="class-header-info">
             <h2><?= e($class['subject']) ?></h2>
-            <p class="class-meta">Section: <?= e($class['section']) ?>  |  Instructor: <?= e($class['teacher']) ?></p>
+            <p class="class-meta">
+                Section: <?= e($class['section']) ?>  |  Instructor:
+                <?php if (!empty($class['teacher_id'])): ?>
+                    <a href="teacher-profile.php?id=<?= (int) $class['teacher_id'] ?>"><?= e($class['teacher']) ?></a>
+                <?php else: ?>
+                    <?= e($class['teacher'] ?? 'Not assigned') ?>
+                <?php endif; ?>
+            </p>
         </div>
         <a href="my-class.php" class="btn-back">Back to My Classes</a>
     </div>
@@ -150,15 +157,38 @@ include __DIR__ . '/../includes/sidebar.php';
 
     <?php elseif ($activeTab === 'colleagues'): ?>
         <section class="tab-panel">
-            <h3>Classmates</h3>
-            <p>Students enrolled in this section.</p>
-            <?php
-            $colRows = [];
-            foreach (get_class_colleagues($classId) as $c) {
-                $colRows[] = [$c['name'], $c['student_id'], $c['email']];
-            }
-            render_table(['Name', 'Student ID', 'Email'], $colRows, 'No classmates found.');
-            ?>
+            <h3>People in this class</h3>
+            <p>Select a profile to view the contact details shared with this class.</p>
+            <?php $classmates = get_class_colleagues($classId); ?>
+            <div class="people-grid">
+                <?php if (!empty($class['teacher_id'])): ?>
+                    <?php $teacherPhoto = profile_photo_src($class['teacher_photo'], (int) $class['teacher_id'], '../', $classId); ?>
+                    <a class="person-card person-card-teacher" href="teacher-profile.php?id=<?= (int) $class['teacher_id'] ?>">
+                        <?php if ($teacherPhoto): ?>
+                            <img class="person-photo" src="<?= e($teacherPhoto) ?>" alt="">
+                        <?php else: ?>
+                            <span class="person-photo person-photo-fallback" aria-hidden="true"><?= e(profile_initials((string) $class['teacher'])) ?></span>
+                        <?php endif; ?>
+                        <strong><?= e($class['teacher']) ?></strong>
+                        <span class="person-role">Instructor</span>
+                        <span class="person-card-action">View contact details</span>
+                    </a>
+                <?php endif; ?>
+                <?php foreach ($classmates as $colleague): ?>
+                    <?php $colleaguePhoto = profile_photo_src($colleague['profile_photo_path'], (int) $colleague['id'], '../', $classId); ?>
+                    <a class="person-card" href="classmate-profile.php?id=<?= (int) $colleague['id'] ?>&amp;class_id=<?= $classId ?>">
+                        <?php if ($colleaguePhoto): ?>
+                            <img class="person-photo" src="<?= e($colleaguePhoto) ?>" alt="">
+                        <?php else: ?>
+                            <span class="person-photo person-photo-fallback" aria-hidden="true"><?= e(profile_initials((string) $colleague['name'])) ?></span>
+                        <?php endif; ?>
+                        <strong><?= e($colleague['name']) ?></strong>
+                        <span class="person-role">Classmate</span>
+                        <span class="person-card-action">View contact details</span>
+                    </a>
+                <?php endforeach; ?>
+                <?php if (!$classmates): ?><p class="empty">No classmates found.</p><?php endif; ?>
+            </div>
         </section>
 
     <?php elseif ($activeTab === 'announcements'): ?>

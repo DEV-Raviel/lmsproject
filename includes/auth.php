@@ -64,7 +64,7 @@ function require_login(): array
     ];
     $_SESSION['user'] = $user;
 
-    $allowedPasswordChangeRoutes = ['change-password.php', 'change_password_action.php'];
+    $allowedPasswordChangeRoutes = ['change-password.php', 'change_password_action.php', 'account.php', 'account_actions.php'];
     if (!empty($user['must_change_password'])
         && !in_array(basename($scriptName), $allowedPasswordChangeRoutes, true)) {
         $applicationRoot = rtrim(dirname(dirname($scriptName)), '/');

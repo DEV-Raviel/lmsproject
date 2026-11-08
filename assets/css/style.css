@@ -1304,6 +1304,207 @@ button[type="submit"]:hover {
   }
 }
 
+.account-details,
+.teacher-contact-card {
+  margin-bottom: 1.25rem;
+  border-top-color: var(--primary);
+}
+
+.account-details h3,
+.teacher-contact-card h3 {
+  margin: 0 0 0.75rem;
+}
+
+.account-details .data-table {
+  border: 0;
+}
+
+.teacher-contact-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.teacher-contact-list > div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.35fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.teacher-contact-list > div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.teacher-contact-list dt {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.teacher-contact-list dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.teacher-contact-list a {
+  color: var(--accent);
+}
+
+@media (max-width: 480px) {
+  .teacher-contact-list > div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+}
+
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.person-card {
+  display: flex;
+  min-width: 0;
+  min-height: 232px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  padding: 1rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  text-align: center;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.person-card:hover,
+.person-card:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.person-card:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.person-card-teacher {
+  border-top: 4px solid var(--primary);
+}
+
+.person-card strong {
+  width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--secondary);
+  font-size: 0.95rem;
+}
+
+.person-photo {
+  display: grid;
+  width: 120px;
+  height: 120px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--primary-light);
+  object-fit: cover;
+}
+
+.person-photo-fallback {
+  color: var(--primary);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.person-role {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.person-card-action {
+  margin-top: auto;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.person-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 auto 1.25rem;
+  text-align: center;
+}
+
+.person-photo-large {
+  width: 144px;
+  height: 144px;
+  border-radius: 12px;
+}
+
+.person-profile h3,
+.person-profile h4 {
+  margin: 0.35rem 0 0;
+  color: var(--secondary);
+  overflow-wrap: anywhere;
+}
+
+.profile-photo-preview {
+  display: block;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-field input {
+  width: 1rem;
+  min-height: 1rem;
+}
+
+@media (min-width: 640px) {
+  .people-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .people-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .person-photo {
+    width: 104px;
+    height: 104px;
+  }
+
+  .person-card {
+    min-height: 216px;
+    padding-inline: 0.5rem;
+  }
+}
+
 /* ── My Classes: Class Card Grid ─────────────────────────────────── */
 .class-card-grid {
   display: grid;

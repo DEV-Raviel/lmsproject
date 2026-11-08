@@ -42,7 +42,7 @@ $menus = [
         ],
         'Account' => [
             'profile' => ['My Profile', $basePath . 'teacher/teacher-profile.php'],
-            'settings' => ['Settings', $basePath . 'teacher/settings.php'],
+            'settings' => ['My Account', $basePath . 'teacher/account.php'],
         ]
     ],
     'student' => [
