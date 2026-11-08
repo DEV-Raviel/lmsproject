@@ -5,6 +5,10 @@ require_once __DIR__ . '/includes/functions.php';
 // If user is already logged in, redirect them directly to their respective dashboard
 if (!empty($_SESSION['user'])) {
     $role = $_SESSION['user']['role'] ?? '';
+    if (!empty($_SESSION['user']['must_change_password'])) {
+        header('Location: change-password.php');
+        exit;
+    }
     match ($role) {
         'admin' => header('Location: admin/dashboard.php'),
         'dean' => header('Location: admin/manage_announcements.php'),
@@ -16,6 +20,9 @@ if (!empty($_SESSION['user'])) {
         exit;
     }
 }
+
+$loginNotice = $_SESSION['login_notice'] ?? null;
+unset($_SESSION['login_notice']);
 
 // Handle alert messages from query params
 $errorMessage = '';
@@ -189,6 +196,9 @@ if (isset($_GET['error'])) {
         </div>
 
         <div id="alertBox">
+            <?php if (is_string($loginNotice) && $loginNotice !== ''): ?>
+                <div class="alert-error" role="status"><?= htmlspecialchars($loginNotice, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
             <?php if (!empty($errorMessage)): ?>
                 <div class="alert-error">
                     <?= htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8') ?>

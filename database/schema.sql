@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `full_name` VARCHAR(150) NOT NULL,
     `email` VARCHAR(150) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
+    `must_change_password` TINYINT(1) NOT NULL DEFAULT 0,
     `role` ENUM('admin', 'dean', 'teacher', 'student') NOT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

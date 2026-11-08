@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../config/db.php';
 
 $user = require_role('admin');
@@ -10,19 +11,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $redirect = '../admin/recover_accounts.php';
-$respond = static function (string $message, bool $isError = false, ?string $resetLink = null, ?string $accountName = null) use ($redirect): never {
+$respond = static function (string $message, bool $isError = false, ?string $temporaryPassword = null, ?string $accountName = null) use ($redirect): never {
     $_SESSION['recovery_flash'] = [
         'message' => $message,
         'error' => $isError,
-        'reset_link' => $resetLink,
+        'temporary_password' => $temporaryPassword,
         'account_name' => $accountName,
     ];
     header('Location: ' . $redirect);
     exit;
 };
 
-$csrf = $_POST['csrf'] ?? null;
-if (!is_string($csrf) || empty($_SESSION['csrf']) || !hash_equals($_SESSION['csrf'], $csrf)) {
+if (!csrf_token_is_valid($_POST['csrf'] ?? null)) {
     $respond('Your session expired. Please try again.', true);
 }
 
@@ -31,40 +31,34 @@ if (!$accountId || $accountId < 1 || $accountId === (int) $user['id']) {
     $respond('Select another valid account to recover.', true);
 }
 
-$host = (string) ($_SERVER['HTTP_HOST'] ?? '');
-if (!preg_match('/\A[A-Za-z0-9.-]+(?::[0-9]{1,5})?\z/', $host)) {
-    $respond('A safe reset link could not be generated for this host. Check the web server host configuration.', true);
-}
-
 $pdo = Database::connect();
 try {
-    $accountStmt = $pdo->prepare('SELECT full_name FROM users WHERE id = ?');
+    $temporaryPassword = bin2hex(random_bytes(16));
+    $pdo->beginTransaction();
+    $accountStmt = $pdo->prepare('SELECT full_name FROM users WHERE id = ? FOR UPDATE');
     $accountStmt->execute([$accountId]);
     $accountName = $accountStmt->fetchColumn();
     if ($accountName === false) {
+        $pdo->rollBack();
         $respond('That account was not found.', true);
     }
 
-    $token = bin2hex(random_bytes(32));
-    $tokenHash = hash('sha256', $token);
-    $pdo->beginTransaction();
-    $invalidateStmt = $pdo->prepare(
+    $updateAccount = $pdo->prepare(
+        'UPDATE users SET password = ?, must_change_password = 1 WHERE id = ?'
+    );
+    $updateAccount->execute([password_hash($temporaryPassword, PASSWORD_DEFAULT), $accountId]);
+    if ($updateAccount->rowCount() !== 1) {
+        $pdo->rollBack();
+        $respond('That account no longer exists. No password was changed.', true);
+    }
+    $invalidateTokens = $pdo->prepare(
         'UPDATE password_reset_tokens SET used_at = NOW()
          WHERE user_id = ? AND used_at IS NULL'
     );
-    $invalidateStmt->execute([$accountId]);
-    $insertStmt = $pdo->prepare(
-        'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
-         VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 MINUTE))'
-    );
-    $insertStmt->execute([$accountId, $tokenHash]);
+    $invalidateTokens->execute([$accountId]);
     $pdo->commit();
 
-    $isHttps = !empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off';
-    $scheme = $isHttps ? 'https' : 'http';
-    $sitePath = rtrim(dirname(dirname(str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? '/actions/account_recovery_action.php')))), '/');
-    $resetLink = $scheme . '://' . $host . $sitePath . '/reset-password.php?token=' . rawurlencode($token);
-    $respond('A one-time reset link was generated. It expires in 30 minutes.', false, $resetLink, (string) $accountName);
+    $respond('A temporary password was generated. Share it securely; the account must change it at sign-in.', false, $temporaryPassword, (string) $accountName);
 } catch (PDOException $exception) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

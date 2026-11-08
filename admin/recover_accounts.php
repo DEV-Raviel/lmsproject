@@ -26,19 +26,18 @@ include __DIR__ . '/../includes/sidebar.php';
     <div class="page-header">
         <p class="eyebrow">ACCOUNT ADMINISTRATION</p>
         <h2>Account Recovery</h2>
-        <p>Generate a one-time password reset link for an account. Links expire after 30 minutes.</p>
+        <p>Generate a one-time temporary password. The account must change it at next sign-in.</p>
     </div>
     <?php if ($flash): ?>
         <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status"><?= e($flash['message']) ?></p>
-        <?php if (!empty($flash['reset_link'])): ?>
+        <?php if (!empty($flash['temporary_password'])): ?>
             <section class="recovery-link-card" aria-labelledby="recovery-link-title">
-                <h3 id="recovery-link-title">Copy this reset link now</h3>
-                <p>It is shown only once here. Share it directly with <?= e($flash['account_name']) ?>.</p>
+                <h3 id="recovery-link-title">Copy this temporary password now</h3>
+                <p>It is shown once. Share it securely with <?= e($flash['account_name']) ?>.</p>
                 <label class="field">
-                    <span>Password reset link</span>
-                    <input type="url" readonly value="<?= e($flash['reset_link']) ?>" onclick="this.select()">
+                    <span>Temporary password</span>
+                    <input type="text" readonly value="<?= e($flash['temporary_password']) ?>" onclick="this.select()">
                 </label>
-                <a class="btn" href="<?= e($flash['reset_link']) ?>" target="_blank" rel="noopener noreferrer">Open reset page</a>
             </section>
         <?php endif; ?>
     <?php endif; ?>
@@ -54,10 +53,10 @@ include __DIR__ . '/../includes/sidebar.php';
                         <td><?= e($account['email']) ?></td>
                         <td><?= e(ucfirst($account['role'])) ?></td>
                         <td>
-                            <form method="post" action="../actions/account_recovery_action.php">
+                            <form method="post" action="../actions/account_recovery_action.php" onsubmit="return confirm('Reset this account password and require a change at next sign-in?');">
                                 <?= csrf_field() ?>
                                 <input type="hidden" name="user_id" value="<?= (int) $account['id'] ?>">
-                                <button class="btn btn-outline btn-sm" type="submit">Generate reset link</button>
+                                <button class="btn btn-outline btn-sm" type="submit">Reset password</button>
                             </form>
                         </td>
                     </tr>

@@ -1,6 +1,8 @@
 <?php
 // includes/auth.php - secure session and role checks
 
+require_once __DIR__ . '/../config/db.php';
+
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
@@ -36,6 +38,40 @@ function require_login(): array
         header('Location: ' . ($applicationRoot !== '' ? $applicationRoot : '') . '/index.php');
         exit;
     }
+
+    $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+    $accountStmt = Database::connect()->prepare(
+        'SELECT id, user_code, full_name, email, role, must_change_password
+         FROM users WHERE id = ?'
+    );
+    $accountStmt->execute([(int) ($user['id'] ?? 0)]);
+    $account = $accountStmt->fetch();
+    if (!$account) {
+        $_SESSION = [];
+        session_regenerate_id(true);
+        $applicationRoot = rtrim(dirname(dirname($scriptName)), '/');
+        header('Location: ' . ($applicationRoot !== '' ? $applicationRoot : '') . '/index.php');
+        exit;
+    }
+
+    $user = [
+        'id' => (int) $account['id'],
+        'user_code' => $account['user_code'],
+        'name' => $account['full_name'],
+        'email' => $account['email'],
+        'role' => $account['role'],
+        'must_change_password' => (bool) $account['must_change_password'],
+    ];
+    $_SESSION['user'] = $user;
+
+    $allowedPasswordChangeRoutes = ['change-password.php', 'change_password_action.php'];
+    if (!empty($user['must_change_password'])
+        && !in_array(basename($scriptName), $allowedPasswordChangeRoutes, true)) {
+        $applicationRoot = rtrim(dirname(dirname($scriptName)), '/');
+        header('Location: ' . ($applicationRoot !== '' ? $applicationRoot : '') . '/change-password.php');
+        exit;
+    }
+
     return $user;
 }
 

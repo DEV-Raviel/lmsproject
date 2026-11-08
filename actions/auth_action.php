@@ -33,7 +33,7 @@ try {
     $user = null;
     if ($identifier !== '' && $password !== '' && strlen($identifier) <= 254 && strlen($password) <= 200) {
         $stmt = $pdo->prepare(
-            'SELECT id, user_code, full_name, email, password, role
+            'SELECT id, user_code, full_name, email, password, role, must_change_password
              FROM users
              WHERE LOWER(user_code) = LOWER(?) OR LOWER(email) = LOWER(?)
              LIMIT 1'
@@ -61,7 +61,13 @@ $_SESSION['user'] = [
     'name' => $user['full_name'],
     'email' => $user['email'],
     'role' => $user['role'],
+    'must_change_password' => (bool) $user['must_change_password'],
 ];
+
+if (!empty($user['must_change_password'])) {
+    header('Location: ../change-password.php');
+    exit;
+}
 
 match ($user['role']) {
     'admin' => header('Location: ../admin/dashboard.php'),

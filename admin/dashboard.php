@@ -54,6 +54,16 @@ include __DIR__ . '/../includes/sidebar.php';
 
     <?php if ($flash): ?>
         <p class="<?= !empty($flash['error']) ? 'notice error' : 'notice' ?>" role="status" data-toast><?= e($flash['message']) ?></p>
+        <?php if (!empty($flash['temporary_password'])): ?>
+            <section class="recovery-link-card" aria-labelledby="new-account-password-title">
+                <h3 id="new-account-password-title">Copy this temporary password now</h3>
+                <p>It is shown once. Share it securely; the new user must change it at first sign-in.</p>
+                <label class="field">
+                    <span>Temporary password</span>
+                    <input type="text" readonly value="<?= e($flash['temporary_password']) ?>" onclick="this.select()">
+                </label>
+            </section>
+        <?php endif; ?>
     <?php endif; ?>
 
     <section class="progress-grid admin-metrics" aria-label="School totals">
@@ -100,10 +110,6 @@ include __DIR__ . '/../includes/sidebar.php';
                         <option value="dean">Dean</option>
                         <option value="admin">Administrator</option>
                     </select>
-                </div>
-                <div class="field">
-                    <label for="password">Temporary password</label>
-                    <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password">
                 </div>
                 <button class="btn" type="submit">Create account</button>
             </form>

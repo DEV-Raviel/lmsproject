@@ -70,16 +70,18 @@ Sign-in and security
   - Sign-in uses a per-session CSRF token. Sessions use strict cookie-only
     mode, HttpOnly, SameSite=Lax, and Secure cookies when HTTPS is enabled.
   - There is no persistent "Remember me" feature. The legacy reset.php route
-    is disabled; use an Administrator-generated one-time reset link instead.
+    is disabled; request a temporary password from an Administrator if needed.
 
 Administrator
   - Use User Management to create and manage accounts, classes, and enrollments.
+  - New accounts receive a random temporary password shown to the Administrator
+    once. The user must change it before opening any role pages.
   - Enroll multiple students into a class by pasting up to 200 student user
     codes or email addresses into the class enrollment panel. Duplicate
     enrollments are skipped and unmatched entries are reported.
-  - Use Account Recovery to create a one-time password reset link for another
-    account. Links expire after 30 minutes, can be used only once, and require
-    a new password of at least 12 characters.
+  - Use Account Recovery to assign a random temporary password to another
+    account. It is shown once to the Administrator; the user must change it
+    before accessing the LMS.
 
 Dean
   - Manage school announcements; published updates appear on teacher and
@@ -138,17 +140,21 @@ current schema, including quiz tables and demo seed data.
 
 The files in database/migrations are for upgrading an existing database:
   1. database/migrations/2026_11_auth_security.sql
-  2. database/migrations/2026_11_create_quizzes.sql
-  3. database/migrations/2026_11_quiz_attempt_timing.sql
-  4. database/migrations/2026_11_create_calendar_events.sql
-  5. database/migrations/2026_11_dean_announcements_and_account_recovery.sql
-  6. database/migrations/2026_11_personal_calendar_tasks.sql
-  7. database/migrations/2026_11_student_profiles.sql
+  2. database/migrations/2026_11_forced_password_change.sql
+  3. database/migrations/2026_11_create_quizzes.sql
+  4. database/migrations/2026_11_quiz_attempt_timing.sql
+  5. database/migrations/2026_11_create_calendar_events.sql
+  6. database/migrations/2026_11_dean_announcements_and_account_recovery.sql
+  7. database/migrations/2026_11_personal_calendar_tasks.sql
+  8. database/migrations/2026_11_student_profiles.sql
 
 Apply the auth-security migration to existing installations before using the
 login throttling feature. Login attempts are limited per normalized account
 identifier and source IP; five unsuccessful attempts within 15 minutes lock
 both buckets for 15 minutes. The migration is safe to apply more than once.
+Apply the forced-password-change migration once to existing installations
+before creating accounts or resetting passwords with the temporary-password
+workflow.
 Apply the quiz table migration before the timing
 migration; the timing migration alters quiz_attempts and is not intended to be
 run repeatedly. Apply the calendar events migration, then the Dean/recovery
@@ -215,7 +221,8 @@ admin/manage_announcements.php    Dean announcement management
 admin/calendar.php                Dean school events calendar
 admin/recover_accounts.php        Administrator account recovery
 admin/student_profiles.php        Administrator enrollment profile management
-reset-password.php                One-time password reset form
+change-password.php               Forced first-login password change
+reset-password.php                Legacy one-time reset-link form
 teacher/                          Teacher dashboards and tools
 student/                          Student dashboards and learning pages
 actions/                          Login, role tools, and submission handlers

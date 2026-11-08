@@ -14,8 +14,13 @@ $fail = static function (string $message) use ($redirect): never {
     header('Location: ' . $redirect);
     exit;
 };
-$succeed = static function (string $message) use ($redirect): never {
-    $_SESSION['admin_flash'] = ['message' => $message, 'error' => false];
+$succeed = static function (string $message, ?string $temporaryPassword = null) use ($redirect): never {
+    $_SESSION['admin_flash'] = [
+        'message' => $message,
+        'error' => false,
+        'temporary_password' => $temporaryPassword,
+        'account_created' => $temporaryPassword !== null,
+    ];
     header('Location: ' . $redirect);
     exit;
 };
@@ -33,15 +38,18 @@ try {
         $name = trim($_POST['full_name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $role = $_POST['role'] ?? '';
-        $password = $_POST['password'] ?? '';
 
         if ($userCode === '' || $name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)
-            || !in_array($role, ['admin', 'dean', 'teacher', 'student'], true) || strlen($password) < 8) {
-            $fail('Enter a valid user code, name, email, role, and password of at least 8 characters.');
+            || !in_array($role, ['admin', 'dean', 'teacher', 'student'], true)) {
+            $fail('Enter a valid user code, name, email, and role.');
         }
-        $stmt = $pdo->prepare('INSERT INTO users (user_code, full_name, email, password, role) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([$userCode, $name, $email, password_hash($password, PASSWORD_DEFAULT), $role]);
-        $succeed('Account created successfully.');
+        $temporaryPassword = bin2hex(random_bytes(16));
+        $stmt = $pdo->prepare(
+            'INSERT INTO users (user_code, full_name, email, password, role, must_change_password)
+             VALUES (?, ?, ?, ?, ?, 1)'
+        );
+        $stmt->execute([$userCode, $name, $email, password_hash($temporaryPassword, PASSWORD_DEFAULT), $role]);
+        $succeed('Account created. Copy the temporary password and share it securely.', $temporaryPassword);
     }
 
     if ($action === 'create_class') {
