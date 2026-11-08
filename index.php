@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
 
 // If user is already logged in, redirect them directly to their respective dashboard
 if (!empty($_SESSION['user'])) {
@@ -22,6 +23,8 @@ if (isset($_GET['error'])) {
     $errorMessage = match ($_GET['error']) {
         'invalid_credentials' => 'Invalid User ID / Email or Password.',
         'missing_fields'     => 'Please fill in all required fields.',
+        'rate_limited'       => 'Too many unsuccessful attempts. Wait 15 minutes before trying again.',
+        'csrf_expired'       => 'Your sign-in page expired. Reload it and try again.',
         default               => 'An error occurred during sign in.',
     };
 }
@@ -146,68 +149,6 @@ if (isset($_GET['error'])) {
             color: #94a3b8;
         }
 
-        .options-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            font-size: 13px;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-
-        .remember-me input[type="checkbox"] {
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            position: relative;
-            display: grid;
-            place-content: center;
-        }
-
-        .remember-me input[type="checkbox"]::before {
-            content: "";
-            width: 10px;
-            height: 10px;
-            transform: scale(0);
-            transition: 120ms transform ease-in-out;
-            box-shadow: inset 1em 1em var(--accent-text);
-            background-color: var(--accent-text);
-            transform-origin: center;
-            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-        }
-
-        .remember-me input[type="checkbox"]:checked {
-            background-color: var(--accent);
-            border-color: var(--accent);
-        }
-
-        .remember-me input[type="checkbox"]:checked::before {
-            transform: scale(1);
-        }
-
-        .forgot-password {
-            color: var(--accent);
-            text-decoration: none;
-            transition: color 0.2s;
-            font-weight: 500;
-        }
-
-        .forgot-password:hover {
-            color: var(--accent-hover);
-            text-decoration: underline;
-        }
-
         .btn-submit {
             width: 100%;
             background-color: var(--accent);
@@ -301,6 +242,7 @@ if (isset($_GET['error'])) {
         </div>
 
         <form action="actions/auth_action.php" method="POST" id="loginForm">
+            <?= csrf_field() ?>
             <div class="form-group">
                 <label for="loginIdentifier">Email Address or User ID</label>
                 <input type="text" id="loginIdentifier" name="identifier" required placeholder="name@eguro.edu.ph">
@@ -309,14 +251,6 @@ if (isset($_GET['error'])) {
             <div class="form-group">
                 <label for="loginPassword">Password</label>
                 <input type="password" id="loginPassword" name="password" required placeholder="••••••••">
-            </div>
-
-            <div class="options-row">
-                <label class="remember-me">
-                    <input type="checkbox" name="remember">
-                    <span>Remember me</span>
-                </label>
-                <a href="#" class="forgot-password">Forgot Password?</a>
             </div>
 
             <button type="submit" class="btn-submit">Sign In</button>

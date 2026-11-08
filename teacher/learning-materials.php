@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         teacher_flash_redirect(teacher_class_page('learning-materials.php', $returnClassId), 'Select your class and enter a material title.', true);
     }
     try {
-        $filePath = store_teacher_upload($_FILES['material'] ?? [], 'study_materials');
+        $filePath = store_safe_upload($_FILES['material'] ?? [], 'study_materials');
         if ($filePath === '') {
             teacher_flash_redirect(teacher_class_page('learning-materials.php', $classId), 'Choose a file to upload.', true);
         }

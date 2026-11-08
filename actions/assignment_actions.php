@@ -1,12 +1,10 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/upload.php';
 require_once __DIR__ . '/../config/db.php';
 
-$user = require_login();
-if (($user['role'] ?? '') !== 'student') {
-    http_response_code(403);
-    exit('Access denied.');
-}
+$user = require_role('student');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     exit('Method not allowed.');
@@ -50,35 +48,12 @@ $file = $_FILES['file'] ?? [];
 if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || ($file['size'] ?? 0) > 10 * 1024 * 1024) {
     $fail('Choose a file smaller than 10 MB and try again.');
 }
-$extension = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
-$allowedTypes = [
-    'pdf' => ['application/pdf'],
-    'doc' => ['application/msword', 'application/CDFV2'],
-    'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip'],
-    'ppt' => ['application/vnd.ms-powerpoint', 'application/CDFV2'],
-    'pptx' => ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/zip'],
-    'xls' => ['application/vnd.ms-excel', 'application/CDFV2'],
-    'xlsx' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip'],
-    'png' => ['image/png'],
-    'jpg' => ['image/jpeg'],
-    'jpeg' => ['image/jpeg'],
-    'zip' => ['application/zip', 'application/x-zip'],
-];
-$mime = isset($file['tmp_name']) ? (new finfo(FILEINFO_MIME_TYPE))->file((string) $file['tmp_name']) : false;
-if (!isset($allowedTypes[$extension]) || !in_array($mime, $allowedTypes[$extension], true)) {
-    $fail('Unsupported file type. Upload a PDF, Office document, image, or ZIP file.');
+try {
+    $relativePath = store_safe_upload($file, 'submissions');
+} catch (RuntimeException $exception) {
+    $fail($exception->getMessage());
 }
-
-$directory = __DIR__ . '/../uploads/submissions';
-if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
-    $fail('The submission upload folder is unavailable. Please contact your administrator.');
-}
-$filename = bin2hex(random_bytes(16)) . '.' . $extension;
-$absolutePath = $directory . '/' . $filename;
-if (!move_uploaded_file((string) $file['tmp_name'], $absolutePath)) {
-    $fail('The uploaded file could not be saved. Please try again.');
-}
-$relativePath = 'uploads/submissions/' . $filename;
+$absolutePath = __DIR__ . '/../' . $relativePath;
 
 try {
     $stmt = $pdo->prepare(

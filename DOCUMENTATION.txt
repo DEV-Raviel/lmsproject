@@ -26,13 +26,16 @@ LOCAL INSTALLATION (XAMPP)
 3. Create/import the database:
    - Open phpMyAdmin, select the Import tab, and import database/schema.sql.
    - The schema creates and selects the lms_db database.
-4. Check the database settings in config/db.php. The default local settings are:
+4. Configure the database. The application reads `LMS_DB_HOST`,
+   `LMS_DB_NAME`, `LMS_DB_USER`, and `LMS_DB_PASSWORD` from the process
+   environment. If unset, local XAMPP defaults are:
        Host: localhost
        Database: lms_db
        User: root
        Password: (blank)
-   Change these settings if your local MySQL installation uses different
-   credentials.
+   Set the environment variables for installations using different
+   credentials; database errors are logged server-side and are not displayed
+   to users.
 5. Open the application:
        http://localhost/LMS/
 6. Sign in with a seeded account listed under DEMO ACCOUNTS below.
@@ -60,6 +63,15 @@ application available outside a trusted local development environment.
 
 USER ROLES AND COMMON WORKFLOWS
 -------------------------------
+Sign-in and security
+  - Sign in using the account email or user code and password.
+  - After five failed attempts within 15 minutes, that account identifier and
+    source IP are temporarily blocked for 15 minutes.
+  - Sign-in uses a per-session CSRF token. Sessions use strict cookie-only
+    mode, HttpOnly, SameSite=Lax, and Secure cookies when HTTPS is enabled.
+  - There is no persistent "Remember me" feature. The legacy reset.php route
+    is disabled; use an Administrator-generated one-time reset link instead.
+
 Administrator
   - Use User Management to create and manage accounts, classes, and enrollments.
   - Enroll multiple students into a class by pasting up to 200 student user
@@ -125,24 +137,26 @@ For a new installation, use database/schema.sql. It contains the complete
 current schema, including quiz tables and demo seed data.
 
 The files in database/migrations are for upgrading an existing database:
-  1. database/migrations/2026_11_create_quizzes.sql
-  2. database/migrations/2026_11_quiz_attempt_timing.sql
-  3. database/migrations/2026_11_create_calendar_events.sql
-  4. database/migrations/2026_11_dean_announcements_and_account_recovery.sql
-  5. database/migrations/2026_11_personal_calendar_tasks.sql
+  1. database/migrations/2026_11_auth_security.sql
+  2. database/migrations/2026_11_create_quizzes.sql
+  3. database/migrations/2026_11_quiz_attempt_timing.sql
+  4. database/migrations/2026_11_create_calendar_events.sql
+  5. database/migrations/2026_11_dean_announcements_and_account_recovery.sql
+  6. database/migrations/2026_11_personal_calendar_tasks.sql
+  7. database/migrations/2026_11_student_profiles.sql
 
-Apply the quiz table migration first, then the timing migration. The timing
-migration alters quiz_attempts and is not intended to be run repeatedly. Apply
-the calendar events migration to enable persistent role-specific events. The
-Dean and recovery migration converts existing Admin/Dean calendar events to
-school-wide events and creates announcement and one-time reset-token tables.
-Apply it once after the calendar events migration. Back up the database before
-applying migrations, and verify that the target database has not already
-received each change.
-Apply the personal calendar tasks migration once after the Dean/recovery
-migration to enable private role-calendar task lists. Apply
-database/migrations/2026_11_student_profiles.sql once to enable enrollment
-profile imports and manual editing.
+Apply the auth-security migration to existing installations before using the
+login throttling feature. Login attempts are limited per normalized account
+identifier and source IP; five unsuccessful attempts within 15 minutes lock
+both buckets for 15 minutes. The migration is safe to apply more than once.
+Apply the quiz table migration before the timing
+migration; the timing migration alters quiz_attempts and is not intended to be
+run repeatedly. Apply the calendar events migration, then the Dean/recovery
+migration (which converts existing Admin/Dean events to school-wide events and
+creates announcement and one-time reset-token tables). Apply personal calendar
+tasks after the Dean/recovery migration, and student profiles independently.
+Back up the database before applying migrations and verify that each target
+change has not already been applied.
 
 STUDENT ENROLLMENT PROFILES
 ---------------------------
@@ -217,18 +231,23 @@ TROUBLESHOOTING
 ---------------
 Database connection failed
   - Confirm MySQL is running and the database exists.
-  - Check host, database name, username, and password in config/db.php.
+  - Check LMS_DB_HOST, LMS_DB_NAME, LMS_DB_USER, and LMS_DB_PASSWORD in the
+    Apache/PHP process environment (or use the documented local defaults).
   - Confirm PHP has pdo_mysql enabled.
 
 Login does not work
   - Confirm the account exists and the user ID/email is entered correctly.
   - For a fresh demo installation, use the seeded password shown above.
   - Confirm the account's role is correct in the users table.
+  - If sign-in attempts were throttled, wait 15 minutes before trying again.
+  - Reload the sign-in page if its CSRF token has expired.
 
 Upload fails
   - Confirm the upload folder exists and is writable by Apache/PHP.
   - Use a supported file type and a file no larger than 10 MB.
   - Check upload_max_filesize, post_max_size, and the PHP/Apache error logs.
+  - Ensure Apache permits the uploads/.htaccess rules so directory listings
+    and executable script extensions are denied.
 
 Quiz tables are missing
   - For a new database, import database/schema.sql.

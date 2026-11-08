@@ -1,6 +1,7 @@
 # Local uploads and user-generated files
 /uploads/*
 !/uploads/.gitkeep
+!/uploads/.htaccess
 
 # Local analysis output and source snapshots
 /.agents/
@@ -10,5 +11,4 @@
 /assets/css/student.css
 
 # Legacy utilities that are not part of the application
-/reset.php
 /setup-student.sh

@@ -40,6 +40,14 @@ function csrf_field(): string
     return '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">';
 }
 
+function csrf_token_is_valid(mixed $token): bool
+{
+    return is_string($token)
+        && isset($_SESSION['csrf'])
+        && is_string($_SESSION['csrf'])
+        && hash_equals($_SESSION['csrf'], $token);
+}
+
 /**
  * Print a table. $rows is a list of rows; each cell is plain text
  * or ['href' => '...', 'text' => '...'] for a link.

@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         teacher_flash_redirect(teacher_class_page('assignments.php', $returnClassId), 'Select your class, enter a title, and choose a future deadline.', true);
     }
     try {
-        $filePath = store_teacher_upload($_FILES['attachment'] ?? [], 'assignments');
+        $filePath = store_safe_upload($_FILES['attachment'] ?? [], 'assignments');
         $stmt = $pdo->prepare(
             'INSERT INTO assignments (class_id, title, instructions, file_path, deadline, created_by)
              VALUES (?, ?, ?, ?, ?, ?)'
