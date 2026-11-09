@@ -26,8 +26,9 @@ if (!$teacher) {
 }
 
 $classStmt = $pdo->prepare(
-    'SELECT c.id, c.code, c.name
+    'SELECT c.id, c.code, course.name
      FROM classes c
+     JOIN courses course ON course.id = c.course_id
      JOIN class_enrollments ce ON ce.class_id = c.id
      WHERE c.teacher_id = ? AND ce.student_id = ?
      ORDER BY c.code'

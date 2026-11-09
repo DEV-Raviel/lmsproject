@@ -1,0 +1,195 @@
+e-GURO LMS - ENTITY RELATIONSHIP DIAGRAM
+========================================
+
+Source of truth: database/schema.sql
+Database engine: MySQL / MariaDB (InnoDB)
+
+NORMALIZED COURSE AND TERM DATA
+-------------------------------
+Course identity is stored once in courses. Academic-year/semester pairs are
+stored once in academic_terms. A class offering references both entities, plus
+its teacher and section code. This avoids repeating course names and term
+labels across offerings.
+
+RELATIONSHIP OVERVIEW
+---------------------
+
+users         (1) ---- (0..1) student_profiles
+courses       (1) ---- (0..N) classes
+academic_terms(1) ---- (0..N) classes
+users         (1) ---- (0..N) classes                 [teacher_id; nullable]
+users         (1) ---- (0..N) class_enrollments       [student_id]
+classes       (1) ---- (0..N) class_enrollments       [class_id]
+classes       (1) ---- (0..N) study_materials         [class_id]
+users         (1) ---- (0..N) study_materials         [uploaded_by]
+classes       (1) ---- (0..N) assignments             [class_id]
+users         (1) ---- (0..N) assignments             [created_by]
+assignments   (1) ---- (0..N) submissions             [assignment_id]
+users         (1) ---- (0..N) submissions             [student_id]
+classes       (1) ---- (0..N) quizzes                 [class_id]
+users         (1) ---- (0..N) quizzes                 [created_by]
+quizzes       (1) ---- (0..N) quiz_questions          [quiz_id]
+quiz_questions(1) ---- (0..N) quiz_options            [question_id]
+quizzes       (1) ---- (0..N) quiz_attempts           [quiz_id]
+users         (1) ---- (0..N) quiz_attempts           [student_id]
+quiz_attempts (1) ---- (0..N) quiz_answers            [attempt_id]
+quiz_questions(1) ---- (0..N) quiz_answers            [question_id]
+users         (1) ---- (0..N) calendar_events         [created_by]
+users         (1) ---- (0..N) user_tasks              [user_id]
+users         (1) ---- (0..N) announcements           [created_by; nullable]
+users         (1) ---- (0..N) password_reset_tokens   [user_id]
+
+class_enrollments implements the many-to-many relationship between users
+with the student role and classes. The pair (class_id, student_id) is unique.
+
+quiz_attempts links students to quizzes. Each quiz/student pair can have at
+most one attempt. quiz_answers records a question's answer within an attempt;
+the pair (attempt_id, question_id) is unique.
+
+TABLES AND KEY ATTRIBUTES
+-------------------------
+
+users
+  PK  id
+  UQ  user_code
+  UQ  email
+      full_name, facebook_url, profile_photo_path, password,
+      must_change_password, role, created_at
+  role values: admin, dean, teacher, student
+
+login_attempts
+  PK  bucket_key
+      failure_count, window_started_at, locked_until, updated_at
+  No foreign keys. Bucket keys hold hashed login identifier/IP buckets.
+
+student_profiles
+  PK, FK user_id -> users.id (ON DELETE CASCADE)
+      classification, program_course, major, year_level,
+      previous_school_name, previous_school_address, previous_program_name,
+      gwa, first_name, middle_name, last_name, suffix, gender, civil_status,
+      religion, date_of_birth, place_of_birth, barangay, home_address,
+      recovery_email, ccc_email, contact_number, working_student,
+      household_4ps, is_pwd, is_solo_parent, is_indigenous_people,
+      father_name, father_contact_number, father_occupation,
+      mother_name, mother_contact_number, mother_occupation,
+      guardian_name, guardian_contact_number, guardian_address,
+      created_at, updated_at
+  One optional enrollment profile per user.
+
+courses
+  PK  id
+  UQ  name
+      created_at
+  Course names are stored once and referenced by class offerings.
+
+academic_terms
+  PK  id
+  UQ  (fiscal_year, semester)
+      fiscal_year, semester, created_at
+  A shared record represents one academic semester in one fiscal year.
+
+classes
+  PK  id
+  UQ  code
+  FK  course_id -> courses.id (ON DELETE RESTRICT)
+  FK  academic_term_id -> academic_terms.id (ON DELETE RESTRICT)
+  FK  teacher_id -> users.id (ON DELETE SET NULL; nullable)
+      created_at
+  Each row is a class offering/section of a catalog course in a term.
+
+class_enrollments
+  PK  id
+  FK  class_id -> classes.id (ON DELETE CASCADE)
+  FK  student_id -> users.id (ON DELETE CASCADE)
+  UQ  (class_id, student_id)
+      enrolled_at
+
+study_materials
+  PK  id
+  FK  class_id -> classes.id (ON DELETE CASCADE)
+  FK  uploaded_by -> users.id (ON DELETE CASCADE)
+      title, description, file_path, created_at
+
+assignments
+  PK  id
+  FK  class_id -> classes.id (ON DELETE CASCADE)
+  FK  created_by -> users.id (ON DELETE CASCADE)
+      title, instructions, file_path, deadline, points_possible, created_at
+
+submissions
+  PK  id
+  FK  assignment_id -> assignments.id (ON DELETE CASCADE)
+  FK  student_id -> users.id (ON DELETE CASCADE)
+      file_path, score, submitted_at
+  The schema does not declare a unique assignment/student pair.
+
+quizzes
+  PK  id
+  FK  class_id -> classes.id (ON DELETE CASCADE)
+  FK  created_by -> users.id (ON DELETE CASCADE)
+      title, description, deadline, duration_minutes, created_at
+
+quiz_questions
+  PK  id
+  FK  quiz_id -> quizzes.id (ON DELETE CASCADE)
+      question_text, question_type, points, correct_answer, position
+  question_type values: multiple_choice, short_answer
+
+quiz_options
+  PK  id
+  FK  question_id -> quiz_questions.id (ON DELETE CASCADE)
+      option_text, is_correct, position
+
+quiz_attempts
+  PK  id
+  FK  quiz_id -> quizzes.id (ON DELETE CASCADE)
+  FK  student_id -> users.id (ON DELETE CASCADE)
+  UQ  (quiz_id, student_id)
+      score, max_score, started_at, submitted_at
+
+quiz_answers
+  PK  id
+  FK  attempt_id -> quiz_attempts.id (ON DELETE CASCADE)
+  FK  question_id -> quiz_questions.id (ON DELETE CASCADE)
+  UQ  (attempt_id, question_id)
+      answer_text, is_correct, points_awarded
+
+calendar_events
+  PK  id
+  FK  created_by -> users.id (ON DELETE CASCADE)
+      role_scope, title, description, event_date, created_at, updated_at
+  role_scope values: school, teacher, student
+
+user_tasks
+  PK  id
+  FK  user_id -> users.id (ON DELETE CASCADE)
+      title, description, due_date, is_complete, created_at, updated_at
+
+announcements
+  PK  id
+  FK  created_by -> users.id (ON DELETE SET NULL; nullable)
+      title, body, is_published, created_at, updated_at
+
+password_reset_tokens
+  PK  id
+  FK  user_id -> users.id (ON DELETE CASCADE)
+  UQ  token_hash
+      expires_at, used_at, created_at
+
+NOTES
+-----
+
+PK = primary key
+FK = foreign key
+UQ = unique key
+
+Role-based constraints (for example, teacher_id referencing a teacher account
+or student_id referencing a student account) are enforced by application
+logic; the database foreign keys reference users.id without restricting role.
+
+users.full_name is the account's current display name. The name parts in
+student_profiles preserve the separate enrollment-form responses and are not
+used as a duplicate display-name source.
+
+This file documents the current schema. If database/schema.sql changes,
+update this diagram to match.

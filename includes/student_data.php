@@ -112,11 +112,14 @@ function get_academic_classes_for_current_user(): array
         return [];
     }
 
-    $query = 'SELECT c.id, c.code, c.name, c.fiscal_year, c.semester, teacher.full_name AS teacher
+    $query = 'SELECT c.id, c.code, course.name, academic_term.fiscal_year, academic_term.semester,
+                     teacher.full_name AS teacher
               FROM classes c
+              JOIN courses course ON course.id = c.course_id
+              JOIN academic_terms academic_term ON academic_term.id = c.academic_term_id
               LEFT JOIN users teacher ON teacher.id = c.teacher_id';
     $parameters = [];
-    $conditions = ["c.fiscal_year IS NOT NULL", "TRIM(c.fiscal_year) <> ''"];
+    $conditions = ["academic_term.fiscal_year IS NOT NULL", "TRIM(academic_term.fiscal_year) <> ''"];
     if ($user['role'] === 'student') {
         $query .= ' JOIN class_enrollments enrollment ON enrollment.class_id = c.id';
         $conditions[] = 'enrollment.student_id = ?';
@@ -129,7 +132,7 @@ function get_academic_classes_for_current_user(): array
     }
 
     $query .= ' WHERE ' . implode(' AND ', $conditions);
-    $query .= ' ORDER BY c.fiscal_year DESC, c.semester, c.code';
+    $query .= ' ORDER BY academic_term.fiscal_year DESC, academic_term.semester, c.code';
 
     $stmt = Database::connect()->prepare($query);
     $stmt->execute($parameters);
@@ -165,13 +168,15 @@ function get_classes(): array
     }
     $pdo = Database::connect();
     $stmt = $pdo->prepare(
-        'SELECT c.id, c.code AS section, c.name AS subject, c.teacher_id,
-                c.fiscal_year, c.semester,
+        'SELECT c.id, c.code AS section, course.name AS subject, c.teacher_id,
+                academic_term.fiscal_year, academic_term.semester,
                 u.full_name AS teacher, u.email AS teacher_email,
                 u.facebook_url AS teacher_facebook_url,
                 u.profile_photo_path AS teacher_photo
          FROM class_enrollments ce
          JOIN classes c ON c.id = ce.class_id
+         JOIN courses course ON course.id = c.course_id
+         JOIN academic_terms academic_term ON academic_term.id = c.academic_term_id
          LEFT JOIN users u ON u.id = c.teacher_id
          WHERE ce.student_id = ?
          ORDER BY c.code'
@@ -188,12 +193,15 @@ function get_class_by_id(int $id): ?array
     }
     $pdo = Database::connect();
     $stmt = $pdo->prepare(
-        'SELECT c.id, c.code AS section, c.name AS subject, c.teacher_id,
+        'SELECT c.id, c.code AS section, course.name AS subject, c.teacher_id,
+                academic_term.fiscal_year, academic_term.semester,
                 u.full_name AS teacher, u.email AS teacher_email,
                 u.facebook_url AS teacher_facebook_url,
                 u.profile_photo_path AS teacher_photo
          FROM class_enrollments ce
          JOIN classes c ON c.id = ce.class_id
+         JOIN courses course ON course.id = c.course_id
+         JOIN academic_terms academic_term ON academic_term.id = c.academic_term_id
          LEFT JOIN users u ON u.id = c.teacher_id
          WHERE ce.student_id = ? AND c.id = ?'
     );

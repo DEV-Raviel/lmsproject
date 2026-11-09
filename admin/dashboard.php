@@ -42,9 +42,11 @@ $userStmt = $pdo->prepare($userQuery);
 $userStmt->execute($userParameters);
 $users = $userStmt->fetchAll();
 
-$classQuery = 'SELECT c.id, c.code, c.name, c.semester, c.fiscal_year,
+$classQuery = 'SELECT c.id, c.code, course.name, academic_term.semester, academic_term.fiscal_year,
             u.full_name AS teacher_name, COALESCE(enrollment_counts.students_count, 0) AS students_count
      FROM classes c
+     JOIN courses course ON course.id = c.course_id
+     JOIN academic_terms academic_term ON academic_term.id = c.academic_term_id
      LEFT JOIN users u ON u.id = c.teacher_id
      LEFT JOIN (
          SELECT class_id, COUNT(DISTINCT student_id) AS students_count
@@ -54,7 +56,7 @@ $classQuery = 'SELECT c.id, c.code, c.name, c.semester, c.fiscal_year,
      WHERE 1 = 1';
 $classParameters = [];
 if ($classSearch !== '') {
-    $classQuery .= ' AND (c.code LIKE ? OR c.name LIKE ? OR c.semester LIKE ? OR c.fiscal_year LIKE ? OR u.full_name LIKE ?)';
+    $classQuery .= ' AND (c.code LIKE ? OR course.name LIKE ? OR academic_term.semester LIKE ? OR academic_term.fiscal_year LIKE ? OR u.full_name LIKE ?)';
     $term = '%' . $classSearch . '%';
     array_push($classParameters, $term, $term, $term, $term, $term);
 }

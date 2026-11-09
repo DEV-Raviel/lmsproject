@@ -67,8 +67,25 @@ try {
         if (!$teacherStmt->fetchColumn()) {
             $fail('Select a valid teacher account.');
         }
-        $stmt = $pdo->prepare('INSERT INTO classes (code, name, teacher_id, semester, fiscal_year) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([$code, $name, $teacherId, $semester, $fiscalYear]);
+        $pdo->beginTransaction();
+        $courseStmt = $pdo->prepare(
+            'INSERT INTO courses (name) VALUES (?)
+             ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)'
+        );
+        $courseStmt->execute([$name]);
+        $courseId = (int) $pdo->lastInsertId();
+        $termStmt = $pdo->prepare(
+            'INSERT INTO academic_terms (fiscal_year, semester) VALUES (?, ?)
+             ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)'
+        );
+        $termStmt->execute([$fiscalYear, $semester]);
+        $academicTermId = (int) $pdo->lastInsertId();
+        $stmt = $pdo->prepare(
+            'INSERT INTO classes (code, course_id, academic_term_id, teacher_id)
+             VALUES (?, ?, ?, ?)'
+        );
+        $stmt->execute([$code, $courseId, $academicTermId, $teacherId]);
+        $pdo->commit();
         $succeed('Class created and assigned successfully.');
     }
 

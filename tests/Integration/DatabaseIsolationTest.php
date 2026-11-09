@@ -17,6 +17,8 @@ final class DatabaseIsolationTest extends TestCase
         )->fetchAll(PDO::FETCH_COLUMN);
         $requiredTables = [
             'users',
+            'courses',
+            'academic_terms',
             'classes',
             'class_enrollments',
             'assignments',
@@ -28,6 +30,24 @@ final class DatabaseIsolationTest extends TestCase
         foreach ($requiredTables as $table) {
             self::assertContains($table, $tables);
         }
+
+        $courseColumn = $pdo->query(
+            "SELECT column_name FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = 'classes' AND column_name = 'course_id'"
+        )->fetchColumn();
+        self::assertSame('course_id', $courseColumn);
+        $courseForeignKey = $pdo->query(
+            "SELECT referenced_table_name FROM information_schema.key_column_usage
+             WHERE table_schema = DATABASE() AND table_name = 'classes'
+               AND column_name = 'course_id' AND referenced_column_name = 'id'"
+        )->fetchColumn();
+        self::assertSame('courses', $courseForeignKey);
+        $termForeignKey = $pdo->query(
+            "SELECT referenced_table_name FROM information_schema.key_column_usage
+             WHERE table_schema = DATABASE() AND table_name = 'classes'
+               AND column_name = 'academic_term_id' AND referenced_column_name = 'id'"
+        )->fetchColumn();
+        self::assertSame('academic_terms', $termForeignKey);
 
         $contactColumn = $pdo->query(
             "SELECT column_name FROM information_schema.columns

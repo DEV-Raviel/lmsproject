@@ -74,14 +74,29 @@ CREATE TABLE IF NOT EXISTS `student_profiles` (
 ) ENGINE=InnoDB;
 
 -- 2. Classes Table
+CREATE TABLE IF NOT EXISTS `courses` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(150) NOT NULL UNIQUE,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `academic_terms` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `fiscal_year` VARCHAR(50) NOT NULL,
+    `semester` VARCHAR(50) NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `unique_academic_term` (`fiscal_year`, `semester`)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS `classes` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `code` VARCHAR(50) NOT NULL UNIQUE,
-    `name` VARCHAR(150) NOT NULL,
+    `course_id` INT NOT NULL,
+    `academic_term_id` INT NOT NULL,
     `teacher_id` INT NULL,
-    `fiscal_year` VARCHAR(50) DEFAULT '2026-2027',
-    `semester` VARCHAR(50) DEFAULT '1st Semester',
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`) ON DELETE RESTRICT,
+    FOREIGN KEY (`academic_term_id`) REFERENCES `academic_terms`(`id`) ON DELETE RESTRICT,
     FOREIGN KEY (`teacher_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
@@ -265,11 +280,27 @@ UPDATE `users`
 SET `password` = '$2y$12$KRv2jRc9oCuq5qNFBjSVXOFRz6l20qpYf1LjtM4Xp0nzHEiI5m9tC'
 WHERE `password` = '$2y$10$4.o7Z9g9c8WqEfZK1k.Gge17u6o2u9Xqj6N2z7O7eYq1bA7Yg8Pbe';
 
--- Seed Classes
-INSERT INTO `classes` (`code`, `name`, `teacher_id`, `fiscal_year`, `semester`) VALUES
-('2-CS1', 'Web Systems & Technologies', 3, '2026-2027', '1st Semester'),
-('2-CS2', 'Database Management Systems', 3, '2026-2027', '1st Semester'),
-('2-CS4', 'Data Structures & Algorithms', 4, '2026-2027', '1st Semester')
+-- Seed Courses and class offerings
+INSERT INTO `courses` (`name`) VALUES
+('Web Systems & Technologies'),
+('Database Management Systems'),
+('Data Structures & Algorithms')
+ON DUPLICATE KEY UPDATE `id`=`id`;
+
+INSERT INTO `academic_terms` (`fiscal_year`, `semester`) VALUES
+('2026-2027', '1st Semester')
+ON DUPLICATE KEY UPDATE `id`=`id`;
+
+INSERT INTO `classes` (`code`, `course_id`, `academic_term_id`, `teacher_id`)
+SELECT seeded.`code`, courses.`id`, academic_terms.`id`, seeded.`teacher_id`
+FROM (
+    SELECT '2-CS1' AS `code`, 'Web Systems & Technologies' AS `course_name`, 3 AS `teacher_id`, '2026-2027' AS `fiscal_year`, '1st Semester' AS `semester`
+    UNION ALL SELECT '2-CS2', 'Database Management Systems', 3, '2026-2027', '1st Semester'
+    UNION ALL SELECT '2-CS4', 'Data Structures & Algorithms', 4, '2026-2027', '1st Semester'
+) AS seeded
+JOIN `courses` ON `courses`.`name` = seeded.`course_name`
+JOIN `academic_terms` ON `academic_terms`.`fiscal_year` = seeded.`fiscal_year`
+    AND `academic_terms`.`semester` = seeded.`semester`
 ON DUPLICATE KEY UPDATE `id`=`id`;
 
 INSERT IGNORE INTO `class_enrollments` (`class_id`, `student_id`)

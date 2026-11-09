@@ -9,8 +9,11 @@ $basePath = '../';
 $pdo = Database::connect();
 
 $classQuery = $pdo->prepare(
-    'SELECT c.*, COALESCE(enrollment_counts.students_count, 0) AS students_count
+    'SELECT c.*, course.name AS name, academic_term.semester, academic_term.fiscal_year,
+            COALESCE(enrollment_counts.students_count, 0) AS students_count
      FROM classes c
+     JOIN courses course ON course.id = c.course_id
+     JOIN academic_terms academic_term ON academic_term.id = c.academic_term_id
      LEFT JOIN (
          SELECT class_id, COUNT(DISTINCT student_id) AS students_count
          FROM class_enrollments

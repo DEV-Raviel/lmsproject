@@ -193,6 +193,7 @@ The files in database/migrations are for upgrading an existing database:
   9. database/migrations/2026_11_assignment_grading.sql
   10. database/migrations/2026_11_teacher_facebook_contact.sql
   11. database/migrations/2026_11_user_profile_photo.sql
+  12. database/migrations/2026_11_normalize_courses.sql
 
 Apply the auth-security migration to existing installations before using the
 login throttling feature. Login attempts are limited per normalized account
@@ -211,6 +212,11 @@ Back up the database before applying migrations and verify that each target
 change has not already been applied.
 The assignment-grading migration adds the points-possible field used by the
 teacher Gradebook and must be applied before creating or grading assignments.
+Apply the course-normalization migration after the existing migrations. It
+creates a normalized course catalog and academic-term catalog, migrates
+existing class names, semesters, and fiscal years into them, and replaces the
+corresponding `classes` columns with `course_id` and `academic_term_id`. Apply
+it once after backing up the database.
 Apply the teacher Facebook contact migration to add the optional contact-link
 column; teachers are required to provide a valid Facebook profile link in My
 Profile before it is shown to students. Apply the profile-photo migration after the teacher contact migration to add the

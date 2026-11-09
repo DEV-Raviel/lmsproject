@@ -12,10 +12,11 @@ if (!$studentId || $studentId < 1 || !$classId || $classId < 1) {
 
 $classmateStmt = $pdo->prepare(
     "SELECT u.id, u.full_name, u.email, u.facebook_url, u.profile_photo_path,
-            c.code AS class_code, c.name AS class_name
+            c.code AS class_code, course.name AS class_name
      FROM users u
      JOIN class_enrollments classmate ON classmate.student_id = u.id
      JOIN classes c ON c.id = classmate.class_id
+     JOIN courses course ON course.id = c.course_id
      JOIN class_enrollments viewer ON viewer.class_id = c.id AND viewer.student_id = ?
      WHERE u.id = ? AND u.role = 'student' AND c.id = ? AND u.id <> viewer.student_id"
 );
