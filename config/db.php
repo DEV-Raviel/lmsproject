@@ -5,7 +5,7 @@ class Database
     public static function connect(): PDO
     {
         $host = getenv('LMS_DB_HOST') ?: 'localhost';
-        $database = getenv('LMS_DB_NAME') ?: 'lms_db';
+        $database = getenv('LMS_DB_NAME') ?: 'eguro_lms';
         $username = getenv('LMS_DB_USER') ?: 'root';
         $password = getenv('LMS_DB_PASSWORD') ?: '';
 

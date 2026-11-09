@@ -26,12 +26,12 @@ LOCAL INSTALLATION (XAMPP)
 2. Start Apache and MySQL from the XAMPP control panel.
 3. Create/import the database:
    - Open phpMyAdmin, select the Import tab, and import database/schema.sql.
-   - The schema creates and selects the lms_db database.
+   - The schema creates and selects the eguro_lms database.
 4. Configure the database. The application reads `LMS_DB_HOST`,
    `LMS_DB_NAME`, `LMS_DB_USER`, and `LMS_DB_PASSWORD` from the process
    environment. If unset, local XAMPP defaults are:
        Host: localhost
-       Database: lms_db
+       Database: eguro_lms
        User: root
        Password: (blank)
    Set the environment variables for installations using different
@@ -253,10 +253,10 @@ TESTING
 -------
 PHPUnit tests use an isolated MySQL database. Never point them at the live
 application database. Create a test schema from the current database schema
-(replace the schema name with lms_test) using test-only credentials:
+(replace the schema name with eguro_lms_test) using test-only credentials:
 
-       mysql -u root -e "CREATE DATABASE lms_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-       sed 's/`lms_db`/`lms_test`/g' database/schema.sql | mysql -u root
+       mysql -u root -e "CREATE DATABASE eguro_lms_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+       sed 's/`eguro_lms`/`eguro_lms_test`/g' database/schema.sql | mysql -u root
 
 Then run:
 
@@ -264,7 +264,7 @@ Then run:
        composer test
 
 The test bootstrap rejects database names that do not end in "_test". PHPUnit's
-default connection uses localhost, database lms_test, and user root; configure
+default connection uses localhost, database eguro_lms_test, and user root; configure
 LMS_DB_HOST, LMS_DB_NAME, LMS_DB_USER, and LMS_DB_PASSWORD for a dedicated test
 server as needed. Browser workflows were also checked with Playwright at 375,
 768, 1024, 1280, and 1920 pixel viewport widths.
@@ -324,6 +324,8 @@ Database connection failed
   - Confirm MySQL is running and the database exists.
   - Check LMS_DB_HOST, LMS_DB_NAME, LMS_DB_USER, and LMS_DB_PASSWORD in the
     Apache/PHP process environment (or use the documented local defaults).
+  - The default database name is eguro_lms; confirm the schema was imported
+    into that database.
   - Confirm PHP has pdo_mysql enabled.
 
 Login does not work

@@ -1,8 +1,8 @@
 -- e-GURO LMS Database Schema
 -- Compatible with MySQL 5.7+ and MariaDB 10.3+
 
-CREATE DATABASE IF NOT EXISTS `lms_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `lms_db`;
+CREATE DATABASE IF NOT EXISTS `eguro_lms` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `eguro_lms`;
 
 -- 1. Users Table
 CREATE TABLE IF NOT EXISTS `users` (
@@ -285,11 +285,11 @@ INSERT INTO `courses` (`name`) VALUES
 ('Web Systems & Technologies'),
 ('Database Management Systems'),
 ('Data Structures & Algorithms')
-ON DUPLICATE KEY UPDATE `id`=`id`;
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
 
 INSERT INTO `academic_terms` (`fiscal_year`, `semester`) VALUES
 ('2026-2027', '1st Semester')
-ON DUPLICATE KEY UPDATE `id`=`id`;
+ON DUPLICATE KEY UPDATE `semester`=VALUES(`semester`);
 
 INSERT INTO `classes` (`code`, `course_id`, `academic_term_id`, `teacher_id`)
 SELECT seeded.`code`, courses.`id`, academic_terms.`id`, seeded.`teacher_id`
@@ -301,7 +301,7 @@ FROM (
 JOIN `courses` ON `courses`.`name` = seeded.`course_name`
 JOIN `academic_terms` ON `academic_terms`.`fiscal_year` = seeded.`fiscal_year`
     AND `academic_terms`.`semester` = seeded.`semester`
-ON DUPLICATE KEY UPDATE `id`=`id`;
+ON DUPLICATE KEY UPDATE `code`=VALUES(`code`);
 
 INSERT IGNORE INTO `class_enrollments` (`class_id`, `student_id`)
 SELECT c.`id`, u.`id`

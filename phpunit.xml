@@ -7,7 +7,7 @@
     </testsuites>
     <php>
         <env name="LMS_DB_HOST" value="localhost"/>
-        <env name="LMS_DB_NAME" value="lms_test"/>
+        <env name="LMS_DB_NAME" value="eguro_lms_test"/>
         <env name="LMS_DB_USER" value="root"/>
         <env name="LMS_DB_PASSWORD" value=""/>
     </php>

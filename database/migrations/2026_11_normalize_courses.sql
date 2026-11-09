@@ -20,14 +20,14 @@ ALTER TABLE `classes`
 INSERT INTO `courses` (`name`)
 SELECT DISTINCT `name`
 FROM `classes`
-ON DUPLICATE KEY UPDATE `id` = `id`;
+ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
 
 INSERT INTO `academic_terms` (`fiscal_year`, `semester`)
 SELECT DISTINCT
     COALESCE(NULLIF(TRIM(`fiscal_year`), ''), 'Unassigned'),
     COALESCE(NULLIF(TRIM(`semester`), ''), 'Unassigned')
 FROM `classes`
-ON DUPLICATE KEY UPDATE `id` = `id`;
+ON DUPLICATE KEY UPDATE `semester` = VALUES(`semester`);
 
 UPDATE `classes` AS class_offering
 JOIN `courses` AS course ON course.`name` = class_offering.`name`

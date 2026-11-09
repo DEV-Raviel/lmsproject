@@ -1,6 +1,6 @@
 <?php
 
-$databaseName = getenv('LMS_DB_NAME') ?: 'lms_test';
+$databaseName = getenv('LMS_DB_NAME') ?: 'eguro_lms_test';
 if (!str_ends_with($databaseName, '_test')) {
     fwrite(STDERR, "Tests require an isolated database whose name ends with _test.\n");
     exit(2);
